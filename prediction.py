@@ -46,7 +46,7 @@ class Prediction:
         # approximate time to finish each segment in df
         first_segment = True
         for index, row in self.prediction_df.iterrows():
-            
+            pdb.set_trace()
             if first_segment:
                 row['length(m)'] = row['length(m)'] - course.distance_along_segment
                 first_segment = False
@@ -87,7 +87,7 @@ class Prediction:
             row['headwind+2hr(m/s)'] = self.calculate_headwind(row['bearing'], row['wind_speed+2hr'], row['wind_direction+2hr'])
 
             row['segment_speed(km/h)'] = self.calculate_speed(row['predicted_power(watts)'], row['slope'], row['headwind(m/s)'], row['from_elevation'])
-            row['segment_duration(s)'] = ((row['length(m)'] * 1000) / row['segment_speed(km/h)']) * 3600
+            row['segment_duration(s)'] = ((row['length(m)'] / 1000) / row['segment_speed(km/h)']) * 3600
             
             row['predicted_arrival_time'] = segment_start_time
             row['predicted_finishing_time'] = segment_start_time + timedelta(seconds=row['segment_duration(s)'])

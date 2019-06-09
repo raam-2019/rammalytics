@@ -46,7 +46,6 @@ class Prediction:
         # approximate time to finish each segment in df
         first_segment = True
         for index, row in self.prediction_df.iterrows():
-            pdb.set_trace()
             if first_segment:
                 row['length(m)'] = row['length(m)'] - course.distance_along_segment
                 first_segment = False

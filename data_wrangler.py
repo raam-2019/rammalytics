@@ -107,7 +107,8 @@ def write_prediction_to_database(prediction_df):
             'segment_calories': str(Decimal(row['segment_calories']))
         }
         try:
-            table.put_item(Item = entry)
+            # table.put_item(Item = entry)
+            print(entry)
         except Exception as e:
             logging.error('Item = ' + entry)
             logging.error(e)

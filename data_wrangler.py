@@ -78,13 +78,13 @@ def write_prediction_to_database(prediction_df):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('raamalytics')
     model_run_id = str(uuid.uuid4())
-    model_tstamp = datetime.now()
+    model_tstamp = str(datetime.now())
     for index, row in prediction_df.iterrows():
 
         entry = {
             'key': str(uuid.uuid4()),
             'model_run': model_run_id,
-            'model_run_tstamp': str(model_tstamp),
+            'model_run_tstamp': model_tstamp,
             'segment_id': row['segment_id'],
             'wind_speed_m_per_s': Decimal(str(row['wind_speed(m/s)'])),
             'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),

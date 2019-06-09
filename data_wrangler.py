@@ -88,44 +88,47 @@ def write_prediction_to_database(prediction_df):
     
     logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(prediction_df.size, model_tstamp, model_run_id))
     
-    write_count = 0
+    with table.batch_writer() as batch:
+    
+        write_count = 0
 
-    for index, row in prediction_df.iterrows():
+        for index, row in prediction_df.iterrows():
 
-        entry = {
-            'key': str(uuid.uuid4()),
-            'model_run': model_run_id,
-            'model_run_tstamp': model_tstamp,
-            'segment_id': row['segment_id'],
-            'wind_speed_m_per_s': Decimal(str(row['wind_speed(m/s)'])),
-            'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),
-            'wind_direction': Decimal(str(row['wind_direction'])),
-            'wind_direction_confidence_level': Decimal(str(row['wind_direction_confidence_level'])),
-            'predicted_power_watts': Decimal(str(row['predicted_power(watts)'])),
-            'headwind_m_per_s': Decimal(str(row['headwind(m/s)'])),
-            'segment_speed_km_per_h': Decimal(str(row['segment_speed(km/h)'])), 
-            'segment_duration_s': Decimal(str(row['segment_duration(s)'])),
-            'segment_tss': Decimal(str(row['segment_tss'])),
-            'predicted_arrival_time': str(row['predicted_arrival_time']),
-            'predicted_finishing_time': str(row['predicted_finishing_time']),
-            'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
-            'course_bearing': Decimal(str(row['bearing'])),
-            'wind_speed_plus_2hr': str(Decimal(row['wind_speed+2hr'])),
-            'wind_speed_plus_2hr_confidence_level': str(Decimal(row['wind_speed+2hr_confidence_level'])),
-            'wind_direction_plus_2hr': str(Decimal(row['wind_direction+2hr'])),
-            'wind_direction_plus_2hr_confidence_level': str(Decimal(row['wind_direction+2hr_confidence_level'])),
-            'headwind_plus_2hr': str(Decimal(row['headwind+2hr(m/s)'])),
-            'segment_calories': str(Decimal(row['segment_calories']))
-        }
-        try:
-            table.put_item(Item = entry)
-            # print(entry)
-            write_count += 1
+            entry = {
+                'key': str(uuid.uuid4()),
+                'model_run': model_run_id,
+                'model_run_tstamp': model_tstamp,
+                'segment_id': row['segment_id'],
+                'wind_speed_m_per_s': Decimal(str(row['wind_speed(m/s)'])),
+                'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),
+                'wind_direction': Decimal(str(row['wind_direction'])),
+                'wind_direction_confidence_level': Decimal(str(row['wind_direction_confidence_level'])),
+                'predicted_power_watts': Decimal(str(row['predicted_power(watts)'])),
+                'headwind_m_per_s': Decimal(str(row['headwind(m/s)'])),
+                'segment_speed_km_per_h': Decimal(str(row['segment_speed(km/h)'])), 
+                'segment_duration_s': Decimal(str(row['segment_duration(s)'])),
+                'segment_tss': Decimal(str(row['segment_tss'])),
+                'predicted_arrival_time': str(row['predicted_arrival_time']),
+                'predicted_finishing_time': str(row['predicted_finishing_time']),
+                'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
+                'course_bearing': Decimal(str(row['bearing'])),
+                'wind_speed_plus_2hr': str(Decimal(row['wind_speed+2hr'])),
+                'wind_speed_plus_2hr_confidence_level': str(Decimal(row['wind_speed+2hr_confidence_level'])),
+                'wind_direction_plus_2hr': str(Decimal(row['wind_direction+2hr'])),
+                'wind_direction_plus_2hr_confidence_level': str(Decimal(row['wind_direction+2hr_confidence_level'])),
+                'headwind_plus_2hr': str(Decimal(row['headwind+2hr(m/s)'])),
+                'segment_calories': str(Decimal(row['segment_calories']))
+            }
+            try:
+                batch.put_item(Item = entry)
+                # table.put_item(Item = entry)
+                # print(entry)
+                write_count += 1
 
-        except Exception as e:
-            logging.error('Item = ' + entry)
-            logging.error(e)
-            pass
+            except Exception as e:
+                logging.error('Item = ' + entry)
+                logging.error(e)
+                pass
 
     logging.info("wrote {} of {} records to dynamodb".format(write_count, prediction_df.size))
 

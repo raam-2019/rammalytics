@@ -46,8 +46,8 @@ def run():
             # get lat/long from current_Df
             most_recent_row = current_df.ix[current_df['timestamp'].idxmax()]
             
-            read_lat = eval(most_recent_row['coordinates'])[0]
-            read_lon = eval(most_recent_row['coordinates'])[1]
+            read_lat = eval(most_recent_row['coordinates'])[1]
+            read_lon = eval(most_recent_row['coordinates'])[0]
 
             # determine course segment
             current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)

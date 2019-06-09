@@ -27,8 +27,8 @@ class Prediction:
     def __init__(self, course, analysis_window_size, current_segment_index):
         
         self.ftp = 335
-
-        self.prediction_df = course.segment_df[current_segment_index:current_segment_index + analysis_window_size]
+        
+        self.prediction_df = course.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
 
         # extend dataframe for predictive variables
         self.prediction_df['wind_speed(m/s)'] = None

@@ -42,8 +42,8 @@ class Course:
     def find_current_course_segment(self, read_lat, read_lon):
         
         # snap to a position on the course line
-        current_read_position = Point(read_lat, read_lon)
-
+        current_read_position = Point(read_lon, read_lat)
+        
         # should always be distance from beginning of segment
         distance_along_segment = self.course_line.project(current_read_position)
 
@@ -54,26 +54,29 @@ class Course:
 
         # parse out coordinates
         # course location
-        lat_a = self.current_course_position.xy[0][0]
-        lon_a = self.current_course_position.xy[1][0]
+        lat_a = self.current_course_position.xy[1][0]
+        lon_a = self.current_course_position.xy[0][0]
 
         # vertex location 
-        lat_b = nearest_vertex[0].xy[0][0]
-        lon_b = nearest_vertex[0].xy[1][0]
+        lat_b = nearest_vertex[0].xy[1][0]
+        lon_b = nearest_vertex[0].xy[0][0]
 
         # identify current segment
         heading = self.calculate_heading(lat_a, lon_a, lat_b, lon_b)
 
         # find segments that contain the nearest vertex, see which has the matching bearing
+        
         f_lat_match = self.segment_df.loc[self.segment_df['from_lat'] == lat_b]
         t_lat_match = self.segment_df.loc[self.segment_df['to_lat'] == lat_b]
 
         # grab the difference between the observed heading and the course headings, both ways (forwards and backwards)
         bearing_dict = {}
-        bearing_dict['flm_diff_1'] = abs(f_lat_match['bearing'].values[0]) - abs(heading)
-        bearing_dict['flm_diff_2'] = abs(f_lat_match['bearing'].values[0]) - abs(heading - math.pi)
-        bearing_dict['tlm_diff_1'] = abs(t_lat_match['bearing'].values[0]) - abs(heading)
-        bearing_dict['tlm_diff_2'] = abs(t_lat_match['bearing'].values[0]) - abs(heading - math.pi)
+        if not f_lat_match.empty:
+            bearing_dict['flm_diff_1'] = abs(f_lat_match['bearing'].values[0]) - abs(heading)
+            bearing_dict['flm_diff_2'] = abs(f_lat_match['bearing'].values[0]) - abs(heading - math.pi)
+        if not t_lat_match.empty:
+            bearing_dict['tlm_diff_1'] = abs(t_lat_match['bearing'].values[0]) - abs(heading)
+            bearing_dict['tlm_diff_2'] = abs(t_lat_match['bearing'].values[0]) - abs(heading - math.pi)
         
         bd_value_list = list(bearing_dict.values())
         bd_key_list = list(bearing_dict.keys())
@@ -102,7 +105,7 @@ class Course:
         points = []
         
         for segment in segments:
-            points.append(Point(segment['begin']['latitude'], segment['begin']['longitude']))
+            points.append(Point(segment['begin']['longitude'], segment['begin']['latitude']))
         
         return points
 

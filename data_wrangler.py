@@ -122,7 +122,7 @@ def heartbeat():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('rammalytics_heartbeat')
     key = str(uuid.uuid4())
-    tstamp = datetime.now()
+    tstamp = str(datetime.now())
     
     entry = {
         'key': key,

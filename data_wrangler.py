@@ -76,7 +76,7 @@ def write_segments_to_dynamo(segment, upload_tstamp, course_model_id):
 def write_prediction_to_database(prediction_df):
     
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('testing')
+    table = dynamodb.Table('raamalytics')
     model_run_id = str(uuid.uuid4())
     model_tstamp = datetime.now()
     for index, row in prediction_df.iterrows():
@@ -86,24 +86,24 @@ def write_prediction_to_database(prediction_df):
             'model_run': model_run_id,
             'model_run_tstamp': str(model_tstamp),
             'segment_id': row['segment_id'],
-            'wind_speed(m/s)': Decimal(str(row['wind_speed(m/s)'])),
+            'wind_speed_m_per_s': Decimal(str(row['wind_speed(m/s)'])),
             'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),
             'wind_direction': Decimal(str(row['wind_direction'])),
             'wind_direction_confidence_level': Decimal(str(row['wind_direction_confidence_level'])),
-            'predicted_power(watts)': Decimal(str(row['predicted_power(watts)'])),
-            'headwind(m/s)': Decimal(str(row['headwind(m/s)'])),
-            'segment_speed(km/h)': Decimal(str(row['segment_speed(km/h)'])), 
-            'segment_duration(s)': Decimal(str(row['segment_duration(s)'])),
+            'predicted_power_watts': Decimal(str(row['predicted_power(watts)'])),
+            'headwind_m_per_s': Decimal(str(row['headwind(m/s)'])),
+            'segment_speed_km_per_h': Decimal(str(row['segment_speed(km/h)'])), 
+            'segment_duration_s': Decimal(str(row['segment_duration(s)'])),
             'segment_tss': Decimal(str(row['segment_tss'])),
             'predicted_arrival_time': str(row['predicted_arrival_time']),
             'predicted_finishing_time': str(row['predicted_finishing_time']),
             'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
             'course_bearing': Decimal(str(row['bearing'])),
-            'wind_speed+2hr': str(Decimal(row['wind_speed+2hr'])),
-            'wind_speed+2hr_confidence_level': str(Decimal(row['wind_speed+2hr_confidence_level'])),
-            'wind_direction+2hr': str(Decimal(row['wind_direction+2hr'])),
-            'wind_direction+2hr_confidence_level': str(Decimal(row['wind_direction+2hr_confidence_level'])),
-            'headwind+2hr': str(Decimal(row['headwind+2hr(m/s)'])),
+            'wind_speed_plus_2hr': str(Decimal(row['wind_speed+2hr'])),
+            'wind_speed_plus_2hr_confidence_level': str(Decimal(row['wind_speed+2hr_confidence_level'])),
+            'wind_direction_plus_2hr': str(Decimal(row['wind_direction+2hr'])),
+            'wind_direction_plus_2hr_confidence_level': str(Decimal(row['wind_direction+2hr_confidence_level'])),
+            'headwind_plus_2hr': str(Decimal(row['headwind+2hr(m/s)'])),
             'segment_calories': str(Decimal(row['segment_calories']))
         }
         try:

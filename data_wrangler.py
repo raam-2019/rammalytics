@@ -19,7 +19,11 @@ __status__ = "Development"
 
 
 
+BUCKET_NAME = "raam-test-run-datastore-dump"
+
+
 session = boto3.Session()
+
 
 
 def load_course_data():

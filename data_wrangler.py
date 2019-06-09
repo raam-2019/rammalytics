@@ -143,10 +143,9 @@ def bucket_csv_to_df():
     """
 
     # other way: (https://stackoverflow.com/questions/37703634/how-to-import-a-text-file-on-aws-s3-into-pandas-without-writing-to-disk)
-    logging.info('data_wrangler.bucket_csv_to_df(): reading csv - {}'.format(last_added))
+    logging.info('data_wrangler.bucket_csv_to_df(): reading csv for processing - {}'.format(last_added))
     obj = s3.get_object(Bucket=BUCKET_NAME, Key=last_added)
     df = pd.read_csv(io.BytesIO(obj['Body'].read()))
-
 
     return df
 

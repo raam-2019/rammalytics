@@ -107,8 +107,8 @@ class Prediction:
 
     # def predict_segment_power(self, accumulated_tss, slope):
     def predict_segment_power(self, slope):
-        #TODO: obvs
-        return 300
+        # linear regression
+        return 141.0758 + 589.2302 * slope
 
 
 

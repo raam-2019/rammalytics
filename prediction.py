@@ -2,6 +2,7 @@ import pdb
 from datetime import datetime, timedelta
 import statistics
 import math
+import logging
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,12 @@ __author__ = "Steven Wangen"
 __version__ = "0.1"
 __email__ = "srwangen@wisc.edu"
 __status__ = "Development"
+
+
+logger = logging.getLogger(__name__)
+log_level = logging.INFO
+logging.basicConfig(level=log_level,
+                        format='%(asctime)s %(levelname)s %(message)s')
 
 
 class Prediction:

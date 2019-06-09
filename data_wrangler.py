@@ -2,8 +2,6 @@ import requests
 import pdb
 import csv
 import time
-import boto3
-import pandas as pd
 import pickle
 from decimal import Decimal
 import uuid
@@ -11,12 +9,20 @@ import io
 import logging
 from datetime import datetime
 
+import boto3
+import pandas as pd
+
 
 __author__ = "Steven Wangen"
 __version__ = "0.1"
 __email__ = "srwangen@wisc.edu"
 __status__ = "Development"
 
+
+logger = logging.getLogger(__name__)
+log_level = logging.INFO
+logging.basicConfig(level=log_level,
+                        format='%(asctime)s %(levelname)s %(message)s')
 
 
 BUCKET_NAME = "raam-test-run-datastore-dump"
@@ -79,6 +85,11 @@ def write_prediction_to_database(prediction_df):
     table = dynamodb.Table('raamalytics')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
+    
+    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(prediction_df.size, model_tstamp, model_run_id))
+    
+    write_count = 0
+
     for index, row in prediction_df.iterrows():
 
         entry = {
@@ -109,10 +120,14 @@ def write_prediction_to_database(prediction_df):
         try:
             table.put_item(Item = entry)
             # print(entry)
+            write_count += 1
+
         except Exception as e:
             logging.error('Item = ' + entry)
             logging.error(e)
             pass
+
+    logging.info("wrote {} of {} records to dynamodb".format(write_count, prediction_df.size))
 
 
 

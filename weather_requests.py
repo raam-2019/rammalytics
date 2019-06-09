@@ -17,51 +17,63 @@ __version__ = "0.1"
 __email__ = "srwangen@wisc.edu"
 __status__ = "Development"
 
+
+
 API_KEY = 'c124315d967a40b8a4315d967a60b820'
+
+
 
 def best_estimate_wind_speed(latitude, longitude, elevation, hours_from_now):
 
-    # get data from the api
-    forecast = get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
+    try:
+        # get data from the api
+        forecast = get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
 
-    # pull out the data relevant to the predicted arrival time (hours from now)
-    bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][hours_from_now]
-    bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][hours_from_now]
+        # pull out the data relevant to the predicted arrival time (hours from now)
+        bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][hours_from_now]
+        bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][hours_from_now]
 
-    # get the bin edges of the max value
-    max_p_indexes = get_highest_probability_bin_indexes(bin_values)
-    predicted_windspeed = []
-    for i in max_p_indexes:
-        observation = {}
-        observation['windspeed_range(m/s)'] = (bin_edges[i-1], bin_edges[i])
-        observation['windspeed_probability'] = bin_values[i]
-        predicted_windspeed.append(observation)
+        # get the bin edges of the max value
+        max_p_indexes = get_highest_probability_bin_indexes(bin_values)
+        predicted_windspeed = []
+        for i in max_p_indexes:
+            observation = {}
+            observation['windspeed_range(m/s)'] = (bin_edges[i-1], bin_edges[i])
+            observation['windspeed_probability'] = bin_values[i]
+            predicted_windspeed.append(observation)
 
-    return predicted_windspeed   
+        return predicted_windspeed
+
+    except Exception as e:
+        logging.error("ERROR in weather_requests.best_estimate_wind_speed(): {}".format(e))
+        return None
 
 
 
 def best_estimate_wind_direction(latitude, longitude, elevation, hours_from_now):
 
-    # get data from the api
-    forecast = get_wind_direction_probability_forecast_for_point(latitude, longitude, elevation)
-    
-    # pull out the data relevant to the predicted arrival time (hours from now)
-    bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][hours_from_now]
-    bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][hours_from_now]
+    try:
+        # get data from the api
+        forecast = get_wind_direction_probability_forecast_for_point(latitude, longitude, elevation)
+        
+        # pull out the data relevant to the predicted arrival time (hours from now)
+        bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][hours_from_now]
+        bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][hours_from_now]
 
-    # get the bin edges of the max value
-    max_p_indexes = get_highest_probability_bin_indexes(bin_values)
-    predicted_wind_direction = []
-    for i in max_p_indexes:
-        observation = {}
-        observation['wind_direction_range'] = (bin_edges[i-1], bin_edges[i])
-        observation['wind_direction_probability'] = bin_values[i]
-        predicted_wind_direction.append(observation)
+        # get the bin edges of the max value
+        max_p_indexes = get_highest_probability_bin_indexes(bin_values)
+        predicted_wind_direction = []
+        for i in max_p_indexes:
+            observation = {}
+            observation['wind_direction_range'] = (bin_edges[i-1], bin_edges[i])
+            observation['wind_direction_probability'] = bin_values[i]
+            predicted_wind_direction.append(observation)
 
-    return predicted_wind_direction       
+        return predicted_wind_direction       
 
-
+    except Exception as e:
+        logging.error("ERROR in weather_requests.best_estimate_wind_speed(): {}".format(e))
+        return None
 
 
 #####################
@@ -170,20 +182,6 @@ def get_historical_weather_for_point(latitude, longitude, timestamp):
 
 #########################
 # Probabalistic forecasts
-
-
-
-def get_probabalistic_conditions(latitude, longitude, elevation):
-
-    response_data = {}
-
-    response_data['wind_speed_data'] = get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
-    response_data['wind_direction_data'] = get_wind_direction_probability_forecast_for_point(latitude, longitude, elevation)
-
-    return response_data
-
-
-
 
 
 def get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation):

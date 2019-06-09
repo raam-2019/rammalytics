@@ -10,13 +10,18 @@ from shapely.ops import nearest_points
 from shapely.geometry import MultiPoint
 from decimal import Decimal
 import uuid
-
+import logging
 
 __author__ = "Steven Wangen"
 __version__ = "0.1"
 __email__ = "srwangen@wisc.edu"
 __status__ = "Development"
 
+
+logger = logging.getLogger(__name__)
+log_level = logging.INFO
+logging.basicConfig(level=log_level,
+                        format='%(asctime)s %(levelname)s %(message)s')
 
 
 API_KEY = 'c124315d967a40b8a4315d967a60b820'

@@ -6,4 +6,4 @@ to run:
 `source ./env/bin/activate`   
 `pip install -r requirements.txt` . 
 `export AWS_DEFAULT_REGION=us-east-1`  
-`python main.py` . 
+`python main.py`  

@@ -35,6 +35,9 @@ def run():
 
     while True:
 
+        # heartbeat
+        data_wrangler.heartbeat()
+
         # get current location
         current_df = data_wrangler.bucket_csv_to_df()
 

@@ -117,6 +117,26 @@ def write_prediction_to_database(prediction_df):
 
 
 
+def heartbeat():
+    
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('rammalytics_heartbeat')
+    key = str(uuid.uuid4())
+    tstamp = datetime.now()
+    
+        entry = {
+            'key': key,
+            'timestamp': tstamp
+        }
+        try:
+            table.put_item(Item = entry)
+        except Exception as e:
+            logging.error('Item = ' + entry)
+            logging.error(e)
+            pass
+
+
+
 ###############################
 # get the data into this module
 

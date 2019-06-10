@@ -43,18 +43,24 @@ def run():
 
         # check if there is any data returned
         if current_df.size > 0:
-            # get lat/long from current_Df
-            most_recent_row = current_df.ix[current_df['timestamp'].idxmax()]
-            
-            read_lat = eval(most_recent_row['coordinates'])[1]
-            read_lon = eval(most_recent_row['coordinates'])[0]
+            try:
+                # get lat/long from current_Df
+                most_recent_row = current_df.ix[current_df['timestamp'].idxmax()]
+                
+                read_lat = eval(most_recent_row['coordinates'])[1]
+                read_lon = eval(most_recent_row['coordinates'])[0]
 
-            # determine course segment
-            current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)
+                # determine course segment
+                current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)
 
-            # get next n segments in a dataframe for prediction
-            prediction_window_size = 100
-            p = prediction.Prediction(course_object, prediction_window_size, current_segment_index)
+                # get next n segments in a dataframe for prediction
+                prediction_window_size = 10
+                p = prediction.Prediction(course_object, prediction_window_size, current_segment_index)
+           
+            except Exception as e:
+                
+                logging.error('Exception caught in main.run(): {}'.format(e))
+                pass
 
         else:
             logging.error("dataframe populated by IoT datastore is empty!!!")

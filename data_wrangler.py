@@ -126,7 +126,7 @@ def write_prediction_to_database(prediction_df):
                 write_count += 1
 
             except Exception as e:
-                logging.error('Item = ' + entry)
+                logging.error('Item = ' + str(entry))
                 logging.error(e)
                 pass
 

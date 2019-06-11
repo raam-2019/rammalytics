@@ -112,13 +112,22 @@ def write_prediction_to_database(prediction_df):
                 'predicted_finishing_time': str(row['predicted_finishing_time']),
                 'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
                 'course_bearing': Decimal(str(row['bearing'])),
-                'wind_speed_plus_2hr': str(Decimal(row['wind_speed+2hr'])),
-                'wind_speed_plus_2hr_confidence_level': str(Decimal(row['wind_speed+2hr_confidence_level'])),
-                'wind_direction_plus_2hr': str(Decimal(row['wind_direction+2hr'])),
-                'wind_direction_plus_2hr_confidence_level': str(Decimal(row['wind_direction+2hr_confidence_level'])),
-                'headwind_plus_2hr': str(Decimal(row['headwind+2hr(m/s)'])),
-                'segment_calories': str(Decimal(row['segment_calories']))
+                'segment_calories': Decimal(str(row['segment_calories'])),
+
+                'wind_speed_plus_2hr': Decimal(str(row['plus_2_wind_speed(m/s)'])),
+                'wind_speed_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_speed_confidence_level'])),
+                'wind_direction_plus_2hr': Decimal(str(row['plus_2_wind_direction'])),
+                'wind_direction_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_direction_confidence_level'])),
+                'headwind_plus_2hr': Decimal(str(row['plus_2_headwind(m/s)'])),
+
+                'segment_speed_plus_2hr': Decimal(str(row['plus_2_segment_speed(km/h)'])),
+                'segment_duration_plus_2hr': Decimal(str(row['plus_2_segment_duration(s)'])),
+                'predicted_arrival_time_plus_2hr': Decimal(str(row['plus_2_predicted_arrival_time'])),
+                'predicted_finishing_time_plus_2hr': Decimal(str(row['plus_2_predicted_finishing_time'])),
+                'tss_plu_2_hr': Decimal(str(row['plus_2_segment_tss'])),
+                'calories_plus_2hr': Decimal(str(row['plus_2_segment_calories']))
             }
+
             try:
                 batch.put_item(Item = entry)
                 # table.put_item(Item = entry)
@@ -143,7 +152,7 @@ def write_prediction_to_database2(rows):
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
-    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(prediction_df.size, model_tstamp, model_run_id))
+    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows), model_tstamp, model_run_id))
     
     with table.batch_writer() as batch:
     
@@ -169,12 +178,20 @@ def write_prediction_to_database2(rows):
                 'predicted_finishing_time': str(row['predicted_finishing_time']),
                 'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
                 'course_bearing': Decimal(str(row['bearing'])),
-                'wind_speed_plus_2hr': str(Decimal(row['wind_speed+2hr'])),
-                'wind_speed_plus_2hr_confidence_level': str(Decimal(row['wind_speed+2hr_confidence_level'])),
-                'wind_direction_plus_2hr': str(Decimal(row['wind_direction+2hr'])),
-                'wind_direction_plus_2hr_confidence_level': str(Decimal(row['wind_direction+2hr_confidence_level'])),
-                'headwind_plus_2hr': str(Decimal(row['headwind+2hr(m/s)'])),
-                'segment_calories': str(Decimal(row['segment_calories']))
+                'segment_calories': Decimal(str(row['segment_calories'])),
+                
+                'wind_speed_plus_2hr': Decimal(str(row['plus_2_wind_speed(m/s)'])),
+                'wind_speed_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_speed_confidence_level'])),
+                'wind_direction_plus_2hr': Decimal(str(row['plus_2_wind_direction'])),
+                'wind_direction_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_direction_confidence_level'])),
+                'headwind_plus_2hr': Decimal(str(row['plus_2_headwind(m/s)'])),
+
+                'segment_speed_plus_2hr': Decimal(str(row['plus_2_segment_speed(km/h)'])),
+                'segment_duration_plus_2hr': Decimal(str(row['plus_2_segment_duration(s)'])),
+                'predicted_arrival_time_plus_2hr': Decimal(str(row['plus_2_predicted_arrival_time'])),
+                'predicted_finishing_time_plus_2hr': Decimal(str(row['plus_2_predicted_finishing_time'])),
+                'tss_plu_2_hr': Decimal(str(row['plus_2_segment_tss'])),
+                'calories_plus_2hr': Decimal(str(row['plus_2_segment_calories']))
             }
             try:
                 batch.put_item(Item = entry)
@@ -187,7 +204,7 @@ def write_prediction_to_database2(rows):
                 logging.error(e)
                 pass
 
-    logging.info("wrote {} of {} records to dynamodb".format(write_count, prediction_df.size))
+    logging.info("wrote {} of {} records to dynamodb".format(write_count, len(rows)))
 
 
 
@@ -196,11 +213,11 @@ def write_prediction_to_database2(rows):
 def write_cost_of_rest_to_database(rows):
     
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('raamalytics')
+    table = dynamodb.Table('cost_of_rest')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
-    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(prediction_df.size, model_tstamp, model_run_id))
+    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows.keys()), model_tstamp, model_run_id))
     
     with table.batch_writer() as batch:
     
@@ -211,8 +228,9 @@ def write_cost_of_rest_to_database(rows):
             entry = {
                 'key': str(uuid.uuid4()),
                 'model_run': model_run_id,  
+                'prediction_tstamp': str(model_tstamp),
                 'segment_id': key,
-                'cost_of_rest_s': Decimal(str(row[key]))
+                'cost_of_rest_s': Decimal(str(rows[key]))
             }
             try:
                 batch.put_item(Item = entry)

@@ -287,9 +287,8 @@ def get_highest_probability_bin_indexes(array):
 
 def get_weather_for_row(row, wind_observations, prediction_window):
     weather_observation = {}
-    logging.info("pulling wind speed data...")
+    logging.info("pulling wind data for {}, {}".format(row['from_lat'], row['from_lon']))
     weather_observation['wind_speed_data'] = best_estimate_wind_speed(row['from_lat'], row['from_lon'], row['from_elevation'], 120)
-    logging.info("pulling wind direction data...")
     weather_observation['wind_direction_data'] = best_estimate_wind_direction(row['from_lat'], row['from_lon'], row['from_elevation'], 120)
     wind_observations[row['segment_id']] = weather_observation
     

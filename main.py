@@ -2,6 +2,7 @@ import math
 import pdb
 import pickle
 import logging
+import time
 
 
 import shapely
@@ -14,6 +15,7 @@ import pandas as pd
 import course
 import data_wrangler
 import prediction
+import weather_requests
 
 
 __author__ = "Steven Wangen"
@@ -32,7 +34,14 @@ def run():
 
     # load the course data
     course_object = course.Course()
+    
+    # get next n segments in a dataframe for prediction
+    analysis_window_size = 200
+    
+    # make sure weather runs
+    last_weather_et = time.time() + 1000000
 
+    # do stuff    
     while True:
 
         # heartbeat
@@ -47,20 +56,31 @@ def run():
                 # get lat/long from current_Df
                 most_recent_row = current_df.ix[current_df['timestamp'].idxmax()]
                 
-                read_lat = eval(most_recent_row['coordinates'])[1]
-                read_lon = eval(most_recent_row['coordinates'])[0]
+                try:
+                    read_lat = eval(most_recent_row['coordinates'])[1]
+                    read_lon = eval(most_recent_row['coordinates'])[0]
+                
+                except Exception as e:
+                    logging.error('Exception caught trying to parse lat/lon from s3 csv: {}'.format(e))
+                    pass
 
                 # determine course segment
                 current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)
 
-                # get next n segments in a dataframe for prediction
-                prediction_window_size = 10
-                p = prediction.Prediction(course_object, prediction_window_size, current_segment_index)
+                # get weather (if necessary)
+                # if it's been 15 min
+                wind_df = course.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
+
+                if ((last_weather_et + 900) < time.time()):
+                    last_weather_et = time.time()
+                    logging.info("getting fresh weather data...")
+                    wind_data = weather_requests.query_wind_data(prediction_window, wind_df)
+
+                # make predictions
+                p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
            
-            except Exception as e:
-                
+            except Exception as e:     
                 logging.error('Exception caught in main.run(): {}'.format(e))
-                pass
 
         else:
             logging.error("dataframe populated by IoT datastore is empty!!!")
@@ -92,10 +112,14 @@ if __name__ == '__main__':
     current_lat = 39.0997
     current_lon = -94.5786
     current_segment_index = course.find_current_course_segment(current_lat, current_lon)
+    prediction_window_size = 10
+    wind_df = course.segment_df.iloc[current_segment_index:current_segment_index + prediction_window_size]
+    wind_data = weather_requests.query_wind_data(prediction_window_size, wind_df)
+    p = prediction.Prediction(course, prediction_window_size, current_segment_index, wind_data)
     pdb.set_trace()
     """
     run()
-
+    
 
 
 

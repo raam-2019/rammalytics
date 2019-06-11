@@ -36,7 +36,7 @@ def run():
     course_object = course.Course()
     
     # get next n segments in a dataframe for prediction
-    analysis_window_size = 20
+    analysis_window_size = 1000
     
     # make sure weather runs
     last_weather_et = 0

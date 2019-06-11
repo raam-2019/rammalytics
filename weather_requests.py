@@ -41,9 +41,10 @@ def query_wind_data(prediction_window, wind_df):
     results = [pool.apply(self.get_weather_for_row, args=(row, wind_observations, prediction_window,)) for row in self.prediction_df.iterrows()]
     pool.close()
     """
-
+    i = 0
     for index, row in wind_df.iterrows():
-        
+        i += 1
+        logging.info('querying wind data #{}'.format(i)) 
         # iterate over all of the points in the analysis window, and fetch their wind predictions for that time range
         twc_thread = threading.Thread(target=get_weather_for_row, args=(row, wind_observations, prediction_window,))
         twc_thread.start()
@@ -63,25 +64,40 @@ def query_wind_data(prediction_window, wind_df):
 def best_estimate_wind_speed(latitude, longitude, elevation, forecast_range):
 
     try:
+
+        predicted_windspeed = []
+        """
         # get data from the api
         forecast = get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
 
-        predicted_windspeed = []
-
-        for i in range(0, (forecast_range - 1)):
-        
-        # pull out the data relevant to the predicted arrival time (hours from now)
-            bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][i]
-            bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][i]
-
-            # get the bin edges of the max value
-            max_p_indexes = get_highest_probability_bin_indexes(bin_values)
+        if forecast != None:
+                        
+            for i in range(0, (forecast_range - 1)):
             
-            for i in max_p_indexes:
-                observation = {}
-                observation['windspeed_range(m/s)'] = (bin_edges[i-1], bin_edges[i])
-                observation['windspeed_probability'] = bin_values[i]
-                predicted_windspeed.append(observation)
+            # pull out the data relevant to the predicted arrival time (hours from now)
+                bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][i]
+                bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][i]
+
+                # get the bin edges of the max value
+                max_p_indexes = get_highest_probability_bin_indexes(bin_values)
+                
+                for i in max_p_indexes:
+                    observation = {}
+                    observation['windspeed_range(m/s)'] = (bin_edges[i-1], bin_edges[i])
+                    observation['windspeed_probability'] = bin_values[i]
+                    predicted_windspeed.append(observation)
+             
+        else:
+        """
+        forecast = get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
+        for i in range(0, (forecast_range - 1)):
+            observation = {}
+            observation['windspeed_range(m/s)'] = forecast['forecasts'][i]['wspd']
+            observation['windspeed_probability'] = None
+            predicted_windspeed.append(observation)
+
+        if forecast['forecasts'][i]['wspd'] != None:
+            logging.info('successfully queried backup API!')
 
         return predicted_windspeed
 
@@ -92,26 +108,43 @@ def best_estimate_wind_speed(latitude, longitude, elevation, forecast_range):
 
 
 def best_estimate_wind_direction(latitude, longitude, elevation, forecast_range):
+    
+    predicted_wind_direction = []
 
     try:
+        """
         # get data from the api
         forecast = get_wind_direction_probability_forecast_for_point(latitude, longitude, elevation)
-        
-        predicted_wind_direction = []
+
+        if forecast != None:
+
+            for i in range(0, (forecast_range - 1)):
+                # pull out the data relevant to the predicted arrival time (hours from now)
+                bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][i]
+                bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][i]
+
+                # get the bin edges of the max value
+                max_p_indexes = get_highest_probability_bin_indexes(bin_values)
+                
+                for i in max_p_indexes:
+                    observation = {}
+                    observation['wind_direction_range'] = (bin_edges[i-1], bin_edges[i])
+                    observation['wind_direction_probability'] = bin_values[i]
+                    predicted_wind_direction.append(observation)
+
+        else:
+            """
+            # speed and dir from the same call
+        forecast = get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
 
         for i in range(0, (forecast_range - 1)):
-            # pull out the data relevant to the predicted arrival time (hours from now)
-            bin_edges = forecast['forecasts1Hour']['discretePdfs'][0]['binEdges'][i]
-            bin_values = forecast['forecasts1Hour']['discretePdfs'][0]['binValues'][i]
+            observation = {}
+            observation['wind_direction_range'] = forecast['forecasts'][i]['wdir']
+            observation['wind_direction_probability'] = None
+            predicted_wind_direction.append(observation)            
 
-            # get the bin edges of the max value
-            max_p_indexes = get_highest_probability_bin_indexes(bin_values)
-            
-            for i in max_p_indexes:
-                observation = {}
-                observation['wind_direction_range'] = (bin_edges[i-1], bin_edges[i])
-                observation['wind_direction_probability'] = bin_values[i]
-                predicted_wind_direction.append(observation)
+        if forecast['forecasts'][i]['wdir'] != None:
+            logging.info('successfully queried backup API!')
 
         return predicted_wind_direction  
         
@@ -247,12 +280,31 @@ def get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation
     req = requests.get(base_url, request_params)
     
     if req.status_code != 200:
-        
-        raise Exception('TWC API responded w/ status code = {} from url {}'.format(req.status_code, req.url))
+        logging.error('TWC API responded w/ status code = {} from url {}'.format(req.status_code, req.url))
+        return None
     else:    
         return req.json()
 
 
+
+
+
+
+def get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation):
+    # https://api.weather.com/v1/geocode/34.063/-84.217/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820
+    
+    url = "https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820"
+    
+    req = requests.get(url.format(latitude, longitude))
+    
+    if req.status_code != 200:
+        
+        logging.error('TWC API responded w/ status code = {} from url {}'.format(req.status_code, req.url))
+        return None
+
+    else:    
+        
+        return req.json()
 
 
 

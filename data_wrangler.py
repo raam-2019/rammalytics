@@ -159,7 +159,7 @@ def write_prediction_to_database2(rows):
         write_count = 0
 
         for row in rows:
-
+            
             entry = {
                 'key': str(uuid.uuid4()),
                 'model_run': model_run_id,
@@ -188,11 +188,12 @@ def write_prediction_to_database2(rows):
 
                 'segment_speed_plus_2hr': Decimal(str(row['plus_2_segment_speed(km/h)'])),
                 'segment_duration_plus_2hr': Decimal(str(row['plus_2_segment_duration(s)'])),
-                'predicted_arrival_time_plus_2hr': Decimal(str(row['plus_2_predicted_arrival_time'])),
-                'predicted_finishing_time_plus_2hr': Decimal(str(row['plus_2_predicted_finishing_time'])),
+                'predicted_arrival_time_plus_2hr': str(row['plus_2_predicted_arrival_time']),
+                'predicted_finishing_time_plus_2hr': str(row['plus_2_predicted_finishing_time']),
                 'tss_plu_2_hr': Decimal(str(row['plus_2_segment_tss'])),
                 'calories_plus_2hr': Decimal(str(row['plus_2_segment_calories']))
             }
+        
             try:
                 batch.put_item(Item = entry)
                 # table.put_item(Item = entry)
@@ -210,14 +211,14 @@ def write_prediction_to_database2(rows):
 
 
 
-def write_cost_of_rest_to_database(rows):
+def write_cost_of_rest_to_database(hours, rows):
     
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('cost_of_rest')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
-    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows.keys()), model_tstamp, model_run_id))
+    logging.info('data_wrangler.write_cost_of_rest_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows.keys()), model_tstamp, model_run_id))
     
     with table.batch_writer() as batch:
     
@@ -229,9 +230,11 @@ def write_cost_of_rest_to_database(rows):
                 'key': str(uuid.uuid4()),
                 'model_run': model_run_id,  
                 'prediction_tstamp': str(model_tstamp),
+                'window_size_hours': Decimal(str(hours)),
                 'segment_id': key,
                 'cost_of_rest_s': Decimal(str(rows[key]))
             }
+            
             try:
                 batch.put_item(Item = entry)
                 # table.put_item(Item = entry)

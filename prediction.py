@@ -31,18 +31,22 @@ class Prediction:
         logging.debug("analysis window size = {}".format(analysis_window_size))
         prediction_window = 24 # hours
 
+
         self.prediction_df = course.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
 
         # detailed analysis of the evolution of course
         analysis_results = self.model_course_evolution(analysis_window_size, self.prediction_df, wind_observations, course)
-
-        # calculate the cost of rest
-        cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_observations, course)
-
-        # WRITE TO DYNAMO
-        data_wrangler.write_cost_of_rest_to_database(cost_of_rest)
         data_wrangler.write_prediction_to_database2(analysis_results)
 
+        # calculate the cost of rest
+        prediction_windows = [4, 8, 12, 24, 48]
+        best_guess_speed = 27 #kph
+        for hours in prediction_windows:
+            analysis_window_size = course.find_segment_after_x_hours(hours, best_guess_speed)
+            logging.info('calculating cost_of_rest for {} hour window over {} segments'.format(hours, analysis_window_size))
+            cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_observations, course)
+            data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest)
+        
 
 
 
@@ -159,15 +163,16 @@ class Prediction:
 
     def calculate_cost_of_rest(self, analysis_window_size, prediction_df, wind_observations, course):
 
+        logging.info("going to evaluate {} of {} segments".format(analysis_window_size, prediction_df.size))
         # perform one evolution of course accounting for 2hr rest at each segment
         logging.info("Beginning cost of rest calculation...")
         cor_start = time.time()
         costs_of_rest = {}
         total_times = []
         self.ftp = 335
-
+        
         for i in range(0, (analysis_window_size-1)):
-            
+
             # approximate time to finish each segment in df
             first_segment = True
 

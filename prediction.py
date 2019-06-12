@@ -205,11 +205,11 @@ class Prediction:
                 power = self.predict_segment_power(row['slope'])
                     
                 # wind data
-                try:
-                    wind_speed = wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
-                    wind_direction = wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
-                except Exception as e:
-                    logging.error("calculate_cost_of_rest(): exception trying to retrieve wind data...")
+                wind_speed = wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
+                wind_direction = wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
+
+                if wind_speed is None:
+                    raise Exception("calculate_cost_of_rest(): exception trying to retrieve wind data...")
 
                 headwind = self.calculate_headwind(row['bearing'], wind_speed, wind_direction) 
                 segment_speed = self.calculate_speed(power, row['slope'], headwind, row['from_elevation'])

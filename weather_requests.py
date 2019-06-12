@@ -5,6 +5,7 @@ import time
 import boto3
 import pandas as pd
 import pickle
+import random
 from shapely.geometry import Point, LineString
 from shapely.ops import nearest_points
 from shapely.geometry import MultiPoint

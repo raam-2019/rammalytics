@@ -233,7 +233,7 @@ def write_cost_of_rest_to_database(hours, rows):
                 "window_size_hours": str(Decimal(str(hours))),
                 "segment_id": row["segment_id"],
                 "elevation": str(Decimal(str(row["elevation"]))),
-                "cumulative_distance_to_segment": Decimal(str(row["cumulative_distance_to_segment"])),
+                "cumulative_distance_to_segment": str(Decimal(str(row["cumulative_distance_to_segment"]))),
                 "cost_of_rest_s": str(Decimal(str(row["cost_of_rest"])))
             }
             

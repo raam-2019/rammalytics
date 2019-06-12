@@ -289,9 +289,11 @@ def get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation
 
 def get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation):
     # https://api.weather.com/v1/geocode/34.063/-84.217/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820
+    url_list = []
+    url_list.append("https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820")
+    url_list.append("https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c809e3cd332949db89e3cd332939db9e")
+    url = random.choice(url_list)
     
-    # url = "https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c809e3cd332949db89e3cd332939db9e"
-    url = "https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820"
     req = requests.get(url.format(latitude, longitude))
     
     if req.status_code != 200:

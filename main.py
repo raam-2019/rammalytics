@@ -59,6 +59,11 @@ def run():
                 try:
                     read_lat = eval(most_recent_row['coordinates'])[1]
                     read_lon = eval(most_recent_row['coordinates'])[0]
+
+                    if read_lat is None:    
+                        most_recent_row = current_df.ix[current_df['coordinates'].notnull()]
+                        read_lat = eval(most_recent_row['coordinates'])[1]
+                        read_lon = eval(most_recent_row['coordinates'])[0]
                 
                 except Exception as e:
                     logging.error('Exception caught trying to parse lat/lon from s3 csv: {}'.format(e))

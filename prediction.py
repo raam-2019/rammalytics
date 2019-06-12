@@ -74,6 +74,8 @@ class Prediction:
             self.prediction_df['predicted_arrival_time'] = None
             self.prediction_df['predicted_finishing_time'] = None
             self.prediction_df['segment_calories'] = None
+            # self.prediction_df['rh'] = None
+            # self.prediction_df['temp'] = None
 
             self.prediction_df['plus_2_wind_speed(m/s)'] = None
             self.prediction_df['plus_2_wind_speed_confidence_level'] = None
@@ -125,9 +127,9 @@ class Prediction:
                 # result['wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
                 result['wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
                 # result['wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
-                result['rh'] = wind_observations[result['segment_id']]['rh'][hours_from_now]
+                # result['rh'] = wind_observations[result['segment_id']]['rh'][hours_from_now]
                 # result['heat_index'] = wind_observations[result['segment_id']]['heat_index'][hours_from_now]
-                result['temp'] = wind_observations[result['segment_id']]['temp'][hours_from_now]
+                # result['temp'] = wind_observations[result['segment_id']]['temp'][hours_from_now]
 
                 result['headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['wind_speed(m/s)'], result['wind_direction']) 
                 result['segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['headwind(m/s)'], result['from_elevation'])
@@ -425,10 +427,9 @@ if __name__ == '__main__':
             logging.info("getting fresh weather data (this could take a few minutes...)")
             wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
 
-        pdb.set_trace()
         # make predictions
         if len(wind_data.keys()) != 0:
-            p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
+            p = Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
 
     except Exception as e:     
         logging.error('Exception caught in main.run(): {}'.format(e))

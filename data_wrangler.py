@@ -230,11 +230,11 @@ def write_cost_of_rest_to_database(hours, rows):
                 "key": str(uuid.uuid4()),
                 "prediction_tstamp": str(model_tstamp),
                 "model_run": model_run_id,  
-                "window_size_hours": Decimal(str(hours)),
+                "window_size_hours": str(Decimal(str(hours))),
                 "segment_id": row["segment_id"],
-                "elevation": Decimal(str(row["elevation"])),
+                "elevation": str(Decimal(str(row["elevation"]))),
                 "cumulative_distance_to_segment": Decimal(str(row["cumulative_distance_to_segment"])),
-                "cost_of_rest_s": Decimal(str(row["cost_of_rest"]))
+                "cost_of_rest_s": str(Decimal(str(row["cost_of_rest"])))
             }
             
             try:

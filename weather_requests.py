@@ -26,10 +26,6 @@ logging.basicConfig(level=log_level,
                         format='%(asctime)s %(levelname)s %(message)s')
 
 
-API_KEY = os.environ['TWC_API_KEY']
-
-
-
 def query_wind_data(prediction_window, wind_df):
     logging.debug("Beginning query of wind data...")
     weather_read_start = time.time()

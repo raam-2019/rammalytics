@@ -6,6 +6,7 @@ import logging
 import time
 import threading
 import multiprocessing as mp
+import course
 
 import numpy as np
 import pandas as pd
@@ -388,5 +389,47 @@ class Prediction:
                         (tss * exp(1 - exp(-1/window_size)))
         
         return training_load
+
+
+
+
+
+
+if __name__ == '__main__':
+
+    #for testing: kansas city:
+    lat = 33.86697222222222
+    lon = -113.39761111111112
+
+    course_object = course.Course()
+    
+    # get next n segments in a dataframe for prediction
+    analysis_window_size = 1000
+    
+    # make sure weather runs
+    last_weather_et = 0
+
+    try:
+        read_lat = lat
+        read_lon = lon    
+
+        # determine course segment
+        current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)
+
+        # get weather (if necessary)
+        # if it's been 15 min
+        wind_df = course_object.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
+
+        if ((last_weather_et + 1800) < time.time()):
+            last_weather_et = time.time()
+            logging.info("getting fresh weather data (this could take a few minutes...)")
+            wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
+
+        # make predictions
+        if wind_data[0] != None:
+            p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
+
+    except Exception as e:     
+        logging.error('Exception caught in main.run(): {}'.format(e))
 
 

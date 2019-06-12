@@ -214,7 +214,7 @@ def write_prediction_to_database2(rows):
 def write_cost_of_rest_to_database(hours, rows):
     
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('raamalytics')
+    table = dynamodb.Table('cost_of_rest')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     

@@ -36,7 +36,7 @@ def run():
     course_object = course.Course()
     
     # get next n segments in a dataframe for prediction
-    analysis_window_size = 1000
+    analysis_window_size = 1600
     
     # make sure weather runs
     last_weather_et = 0
@@ -62,7 +62,7 @@ def run():
                 
                 except Exception as e:
                     logging.error('Exception caught trying to parse lat/lon from s3 csv: {}'.format(e))
-                    pass
+                    
 
                 if read_lat is not None: 
                     # determine course segment
@@ -74,7 +74,7 @@ def run():
 
                     if ((last_weather_et + 900) < time.time()):
                         last_weather_et = time.time()
-                        logging.info("getting fresh weather data...")
+                        logging.info("getting fresh weather data (this could take a few minutes...)")
                         wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
 
                     # make predictions

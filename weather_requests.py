@@ -44,7 +44,7 @@ def query_wind_data(prediction_window, wind_df):
     i = 0
     for index, row in wind_df.iterrows():
         i += 1
-        logging.info('querying wind data #{}'.format(i)) 
+        # logging.info('querying wind data #{}'.format(i)) 
         # iterate over all of the points in the analysis window, and fetch their wind predictions for that time range
         twc_thread = threading.Thread(target=get_weather_for_row, args=(row, wind_observations, prediction_window,))
         twc_thread.start()
@@ -257,6 +257,7 @@ def get_historical_weather_for_point(latitude, longitude, timestamp):
 
 
 
+
 #########################
 # Probabalistic forecasts
 
@@ -293,8 +294,8 @@ def get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation
 def get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation):
     # https://api.weather.com/v1/geocode/34.063/-84.217/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820
     
+    # url = "https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c809e3cd332949db89e3cd332939db9e"
     url = "https://api.weather.com/v1/geocode/{}/{}/forecast/hourly/360hour.json?language=en-US&units=e&apiKey=c124315d967a40b8a4315d967a60b820"
-    
     req = requests.get(url.format(latitude, longitude))
     
     if req.status_code != 200:
@@ -337,11 +338,44 @@ def get_highest_probability_bin_indexes(array):
 
 
 
+def get_bonehead_weather(latitude, longitude, elevation):
+    data = {}
+    windspeeds = []
+    winddirs = []
+    
+    forecast = get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
+
+    for i in range(0, 359):
+        observation = {}
+        windspeed = {}
+        windspeed['windspeed_range(m/s)'] = forecast['forecasts'][i]['wspd']
+        windspeed['windspeed_probability'] = None
+        windspeeds.append(windspeed)
+        
+        wind_direction = {}
+        wind_direction['wind_direction_range'] = forecast['forecasts'][i]['wdir']
+        wind_direction['wind_direction_probability'] = None
+        winddirs.append(wind_direction)
+
+    data['windspeed'] = windspeeds
+    data['wind_direction'] = winddirs
+
+    return data
+
+
+
+
 def get_weather_for_row(row, wind_observations, prediction_window):
     weather_observation = {}
-    logging.info("pulling wind data for {}, {}".format(row['from_lat'], row['from_lon']))
-    weather_observation['wind_speed_data'] = best_estimate_wind_speed(row['from_lat'], row['from_lon'], row['from_elevation'], 120)
-    weather_observation['wind_direction_data'] = best_estimate_wind_direction(row['from_lat'], row['from_lon'], row['from_elevation'], 120)
+    # logging.info("pulling wind data for {}, {}".format(row['from_lat'], row['from_lon']))
+    # too slow
+    # weather_observation['wind_speed_data'] = best_estimate_wind_speed(row['from_lat'], row['from_lon'], row['from_elevation'], 120)
+    # weather_observation['wind_direction_data'] = best_estimate_wind_direction(row['from_lat'], row['from_lon'], row['from_elevation'], 120)
+    
+    data = get_bonehead_weather(row['from_lat'], row['from_lon'], row['from_elevation'])
+
+    weather_observation['wind_speed_data'] = data['windspeed']
+    weather_observation['wind_direction_data'] = data['wind_direction']
     wind_observations[row['segment_id']] = weather_observation
     
 
@@ -358,5 +392,7 @@ if __name__ == "__main__":
     print(get_probabalistic_conditions(latitude, longitude, elevation))
 
     e['wind_speed_data']['forecasts1Hour']['discretePdfs']['binValues']
+
+
 
 

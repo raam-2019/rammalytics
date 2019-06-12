@@ -148,7 +148,7 @@ def write_prediction_to_database(prediction_df):
 def write_prediction_to_database2(rows):
     
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('raamalytics')
+    table = dynamodb.Table('cost_of_rest')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
@@ -166,9 +166,9 @@ def write_prediction_to_database2(rows):
                 'model_run_tstamp': model_tstamp,
                 'segment_id': row['segment_id'],
                 'wind_speed_m_per_s': Decimal(str(row['wind_speed(m/s)'])),
-                'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),
+                # 'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),
                 'wind_direction': Decimal(str(row['wind_direction'])),
-                'wind_direction_confidence_level': Decimal(str(row['wind_direction_confidence_level'])),
+                # 'wind_direction_confidence_level': Decimal(str(row['wind_direction_confidence_level'])),
                 'predicted_power_watts': Decimal(str(row['predicted_power(watts)'])),
                 'headwind_m_per_s': Decimal(str(row['headwind(m/s)'])),
                 'segment_speed_km_per_h': Decimal(str(row['segment_speed(km/h)'])), 
@@ -181,9 +181,9 @@ def write_prediction_to_database2(rows):
                 'segment_calories': Decimal(str(row['segment_calories'])),
                 
                 'wind_speed_plus_2hr': Decimal(str(row['plus_2_wind_speed(m/s)'])),
-                'wind_speed_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_speed_confidence_level'])),
+                # 'wind_speed_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_speed_confidence_level'])),
                 'wind_direction_plus_2hr': Decimal(str(row['plus_2_wind_direction'])),
-                'wind_direction_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_direction_confidence_level'])),
+                # 'wind_direction_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_direction_confidence_level'])),
                 'headwind_plus_2hr': Decimal(str(row['plus_2_headwind(m/s)'])),
 
                 'segment_speed_plus_2hr': Decimal(str(row['plus_2_segment_speed(km/h)'])),
@@ -214,7 +214,7 @@ def write_prediction_to_database2(rows):
 def write_cost_of_rest_to_database(hours, rows):
     
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('cost_of_rest')
+    table = dynamodb.Table('raamalytics')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     

@@ -39,7 +39,7 @@ class Prediction:
         data_wrangler.write_prediction_to_database2(analysis_results)
 
         # calculate the cost of rest
-        prediction_windows = [4, 8, 12, 24, 48]
+        prediction_windows = [4, 8, 12, 24]
         best_guess_speed = 27 #kph
         for hours in prediction_windows:
             analysis_window_size = course.find_segment_after_x_hours(hours, best_guess_speed)
@@ -54,107 +54,112 @@ class Prediction:
     def model_course_evolution(self, analysis_window_size, prediction_df, wind_observations, course):
         logging.info("going to evolve course for {} segments".format(analysis_window_size))
         
-        # perform predictions
-        logging.info("modeling segment")
-        prediction_start = time.time()
+        try:
+            # perform predictions
+            logging.info("modeling segment")
+            prediction_start = time.time()
 
-        self.ftp = 335
-        
-        # extend dataframe for predictive variables
-        self.prediction_df['wind_speed(m/s)'] = None
-        self.prediction_df['wind_speed_confidence_level'] = None
-        self.prediction_df['wind_direction'] = None
-        self.prediction_df['wind_direction_confidence_level'] = None
-        self.prediction_df['predicted_power(watts)'] = None
-        self.prediction_df['headwind(m/s)'] = None
-        self.prediction_df['segment_speed(km/h)'] = None
-        self.prediction_df['segment_duration(s)'] = None
-        self.prediction_df['segment_tss'] = 0
-        self.prediction_df['predicted_arrival_time'] = None
-        self.prediction_df['predicted_finishing_time'] = None
-        self.prediction_df['segment_calories'] = None
-
-        self.prediction_df['plus_2_wind_speed(m/s)'] = None
-        self.prediction_df['plus_2_wind_speed_confidence_level'] = None
-        self.prediction_df['plus_2_wind_direction'] = None
-        self.prediction_df['plus_2_wind_direction_confidence_level'] = None
-        self.prediction_df['plus_2_headwind(m/s)'] = None
-        self.prediction_df['plus_2_segment_speed(km/h)'] = None
-        self.prediction_df['plus_2_segment_duration(s)'] = None
-        self.prediction_df['plus_2_predicted_arrival_time'] = None
-        self.prediction_df['plus_2_predicted_finishing_time'] = None
-        self.prediction_df['plus_2_segment_tss'] = None
-        self.prediction_df['plus_2_segment_calories'] = None
-
-        # approximate time to finish each segment in df
-        first_segment = True
-        rows = []
-
-        for index, row in self.prediction_df.iterrows():
-            result = {}
-            if first_segment:
-                result['length(m)'] = row['length(m)'] - course.distance_along_segment
-                first_segment = False
-                hours_from_now = 0
-                segment_start_time = datetime.now()
-                plus_2_segment_start_time = datetime.now() + timedelta(hours=2)
-                hours_from_now_plus_2 = 2
-            else:
-                segment_start_time = previous_row['predicted_finishing_time']
-                plus_2_segment_start_time = previous_row['plus_2_predicted_finishing_time']
-                hours_from_now = round((segment_start_time - datetime.now()).seconds / 3600)
-                hours_from_now_plus_2 = round((plus_2_segment_start_time - datetime.now()).seconds / 3600)       
-
-            # write all pertinent data to a dictionary
-            result['slope'] = row['slope']
-            result['segment_id'] = row['segment_id']
-            result['bearing'] = row['bearing']
-            result['to_elevation'] = row['to_elevation']
-            result['from_elevation'] = row['from_elevation']
-            result['length(m)'] = row['length(m)']
-            result['segment_id'] = row['segment_id']
-            result['cumulative_distance_to_segment'] = row['cumulative_distance_to_segment']
-
-            # 
-            # TODO: predicted_power = predict_power_from_slope_tss(slope, tss)
-            result['predicted_power(watts)'] = self.predict_segment_power(result['slope'])
+            self.ftp = 335
             
-            # current course evolution    
-            result['wind_speed(m/s)'] = statistics.mean(wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)'])
-            result['wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
-            result['wind_direction'] = statistics.mean(wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range'])
-            result['wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
+            # extend dataframe for predictive variables
+            self.prediction_df['wind_speed(m/s)'] = None
+            self.prediction_df['wind_speed_confidence_level'] = None
+            self.prediction_df['wind_direction'] = None
+            self.prediction_df['wind_direction_confidence_level'] = None
+            self.prediction_df['predicted_power(watts)'] = None
+            self.prediction_df['headwind(m/s)'] = None
+            self.prediction_df['segment_speed(km/h)'] = None
+            self.prediction_df['segment_duration(s)'] = None
+            self.prediction_df['segment_tss'] = 0
+            self.prediction_df['predicted_arrival_time'] = None
+            self.prediction_df['predicted_finishing_time'] = None
+            self.prediction_df['segment_calories'] = None
 
-            result['headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['wind_speed(m/s)'], result['wind_direction']) 
-            result['segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['headwind(m/s)'], result['from_elevation'])
-            result['segment_duration(s)'] = ((result['length(m)'] / 1000) / result['segment_speed(km/h)']) * 3600
-            result['predicted_arrival_time'] = segment_start_time
-            result['predicted_finishing_time'] = segment_start_time + timedelta(seconds=result['segment_duration(s)'])
-            result['segment_tss'] = self.get_tss([result['predicted_power(watts)']], self.ftp, result['segment_duration(s)'])
-            result['segment_calories'] = ((result['predicted_power(watts)'] * result['segment_duration(s)']) / 4.18) / 0.24
+            self.prediction_df['plus_2_wind_speed(m/s)'] = None
+            self.prediction_df['plus_2_wind_speed_confidence_level'] = None
+            self.prediction_df['plus_2_wind_direction'] = None
+            self.prediction_df['plus_2_wind_direction_confidence_level'] = None
+            self.prediction_df['plus_2_headwind(m/s)'] = None
+            self.prediction_df['plus_2_segment_speed(km/h)'] = None
+            self.prediction_df['plus_2_segment_duration(s)'] = None
+            self.prediction_df['plus_2_predicted_arrival_time'] = None
+            self.prediction_df['plus_2_predicted_finishing_time'] = None
+            self.prediction_df['plus_2_segment_tss'] = None
+            self.prediction_df['plus_2_segment_calories'] = None
 
-            # 2+ hour sim
-            result['plus_2_wind_speed(m/s)'] = statistics.mean(wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_range(m/s)'])
-            result['plus_2_wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_probability'] / 100
-            result['plus_2_wind_direction'] = statistics.mean(wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_range'])
-            result['plus_2_wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_probability'] / 100
+            # approximate time to finish each segment in df
+            first_segment = True
+            rows = []
 
-            result['plus_2_headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['plus_2_wind_speed(m/s)'], result['plus_2_wind_direction']) 
-            result['plus_2_segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['plus_2_headwind(m/s)'], result['from_elevation'])
-            result['plus_2_segment_duration(s)'] = ((result['length(m)'] / 1000) / result['plus_2_segment_speed(km/h)']) * 3600
-            result['plus_2_predicted_arrival_time'] = plus_2_segment_start_time
-            result['plus_2_predicted_finishing_time'] = plus_2_segment_start_time + timedelta(seconds=result['plus_2_segment_duration(s)'])
-            result['plus_2_segment_tss'] = self.get_tss([result['predicted_power(watts)']], self.ftp, result['plus_2_segment_duration(s)'])
-            result['plus_2_segment_calories'] = ((result['predicted_power(watts)'] * result['plus_2_segment_duration(s)']) / 4.18) / 0.24
+            for index, row in self.prediction_df.iterrows():
+                result = {}
+                if first_segment:
+                    result['length(m)'] = row['length(m)'] - course.distance_along_segment
+                    first_segment = False
+                    hours_from_now = 0
+                    segment_start_time = datetime.now()
+                    plus_2_segment_start_time = datetime.now() + timedelta(hours=2)
+                    hours_from_now_plus_2 = 2
+                else:
+                    segment_start_time = previous_row['predicted_finishing_time']
+                    plus_2_segment_start_time = previous_row['plus_2_predicted_finishing_time']
+                    hours_from_now = round((segment_start_time - datetime.now()).seconds / 3600)
+                    hours_from_now_plus_2 = round((plus_2_segment_start_time - datetime.now()).seconds / 3600)       
 
-            # actually update the df with the updated row
-            rows.append(result)
-            # self.prediction_df.at[index] = row
+                # write all pertinent data to a dictionary
+                result['slope'] = row['slope']
+                result['segment_id'] = row['segment_id']
+                result['bearing'] = row['bearing']
+                result['to_elevation'] = row['to_elevation']
+                result['from_elevation'] = row['from_elevation']
+                result['length(m)'] = row['length(m)']
+                result['segment_id'] = row['segment_id']
+                result['cumulative_distance_to_segment'] = row['cumulative_distance_to_segment']
 
-            previous_row = result
+                # 
+                # TODO: predicted_power = predict_power_from_slope_tss(slope, tss)
+                result['predicted_power(watts)'] = self.predict_segment_power(result['slope'])
+                
+                # current course evolution    
+                result['wind_speed(m/s)'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
+                # result['wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
+                result['wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
+                # result['wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
 
-        prediction_end = time.time()
-        logging.info("course evolution analysis took: {} seconds".format(prediction_end - prediction_start))
+                result['headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['wind_speed(m/s)'], result['wind_direction']) 
+                result['segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['headwind(m/s)'], result['from_elevation'])
+                result['segment_duration(s)'] = ((result['length(m)'] / 1000) / result['segment_speed(km/h)']) * 3600
+                result['predicted_arrival_time'] = segment_start_time
+                result['predicted_finishing_time'] = segment_start_time + timedelta(seconds=result['segment_duration(s)'])
+                result['segment_tss'] = self.get_tss([result['predicted_power(watts)']], self.ftp, result['segment_duration(s)'])
+                result['segment_calories'] = ((result['predicted_power(watts)'] * result['segment_duration(s)']) / 4.18) / 0.24
+
+                # 2+ hour sim
+                result['plus_2_wind_speed(m/s)'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_range(m/s)']
+                # result['plus_2_wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_probability'] / 100
+                result['plus_2_wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_range']
+                # result['plus_2_wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_probability'] / 100
+
+                result['plus_2_headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['plus_2_wind_speed(m/s)'], result['plus_2_wind_direction']) 
+                result['plus_2_segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['plus_2_headwind(m/s)'], result['from_elevation'])
+                result['plus_2_segment_duration(s)'] = ((result['length(m)'] / 1000) / result['plus_2_segment_speed(km/h)']) * 3600
+                result['plus_2_predicted_arrival_time'] = plus_2_segment_start_time
+                result['plus_2_predicted_finishing_time'] = plus_2_segment_start_time + timedelta(seconds=result['plus_2_segment_duration(s)'])
+                result['plus_2_segment_tss'] = self.get_tss([result['predicted_power(watts)']], self.ftp, result['plus_2_segment_duration(s)'])
+                result['plus_2_segment_calories'] = ((result['predicted_power(watts)'] * result['plus_2_segment_duration(s)']) / 4.18) / 0.24
+
+                # actually update the df with the updated row
+                rows.append(result)
+                # self.prediction_df.at[index] = row
+
+                previous_row = result
+
+            prediction_end = time.time()
+            logging.info("course evolution analysis took: {} seconds".format(prediction_end - prediction_start))
+
+        except Exception as e:
+            logging.error(e)
+
         return rows
 
 
@@ -202,8 +207,8 @@ class Prediction:
                 power = self.predict_segment_power(row['slope'])
                     
                 # wind data
-                wind_speed = statistics.mean(wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)'])
-                wind_direction = statistics.mean(wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range'])
+                wind_speed = wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
+                wind_direction = wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
 
                 headwind = self.calculate_headwind(row['bearing'], wind_speed, wind_direction) 
                 segment_speed = self.calculate_speed(power, row['slope'], headwind, row['from_elevation'])

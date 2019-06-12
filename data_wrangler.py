@@ -165,33 +165,33 @@ def write_prediction_to_database2(rows):
                 'model_run': model_run_id,
                 'model_run_tstamp': model_tstamp,
                 'segment_id': row['segment_id'],
-                'wind_speed_m_per_s': Decimal(str(row['wind_speed(m/s)'])),
-                # 'wind_speed_confidence_level': Decimal(str(row['wind_speed_confidence_level'])),
-                'wind_direction': Decimal(str(row['wind_direction'])),
-                # 'wind_direction_confidence_level': Decimal(str(row['wind_direction_confidence_level'])),
-                'predicted_power_watts': Decimal(str(row['predicted_power(watts)'])),
-                'headwind_m_per_s': Decimal(str(row['headwind(m/s)'])),
-                'segment_speed_km_per_h': Decimal(str(row['segment_speed(km/h)'])), 
-                'segment_duration_s': Decimal(str(row['segment_duration(s)'])),
-                'segment_tss': Decimal(str(row['segment_tss'])),
+                'wind_speed_m_per_s': str(Decimal(row['wind_speed(m/s)'])),
+                # 'wind_speed_confidence_level': str(Decimal(row['wind_speed_confidence_level'])),
+                'wind_direction': str(Decimal(row['wind_direction'])),
+                # 'wind_direction_confidence_level': str(Decimal(row['wind_direction_confidence_level'])),
+                'predicted_power_watts': str(Decimal(row['predicted_power(watts)'])),
+                'headwind_m_per_s': str(Decimal(row['headwind(m/s)'])),
+                'segment_speed_km_per_h': str(Decimal(row['segment_speed(km/h)'])), 
+                'segment_duration_s': str(Decimal(row['segment_duration(s)'])),
+                'segment_tss': str(Decimal(row['segment_tss'])),
                 'predicted_arrival_time': str(row['predicted_arrival_time']),
                 'predicted_finishing_time': str(row['predicted_finishing_time']),
-                'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
-                'course_bearing': Decimal(str(row['bearing'])),
-                'segment_calories': Decimal(str(row['segment_calories'])),
+                'cumulative_distance_to_segment': str(Decimal(row['cumulative_distance_to_segment'])),
+                'course_bearing': str(Decimal(row['bearing'])),
+                'segment_calories': str(Decimal(row['segment_calories'])),
                 
-                'wind_speed_plus_2hr': Decimal(str(row['plus_2_wind_speed(m/s)'])),
-                # 'wind_speed_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_speed_confidence_level'])),
-                'wind_direction_plus_2hr': Decimal(str(row['plus_2_wind_direction'])),
-                # 'wind_direction_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_direction_confidence_level'])),
-                'headwind_plus_2hr': Decimal(str(row['plus_2_headwind(m/s)'])),
+                'wind_speed_plus_2hr': str(Decimal(row['plus_2_wind_speed(m/s)'])),
+                # 'wind_speed_plus_2hr_confidence_level': str(Decimal(row['plus_2_wind_speed_confidence_level'])),
+                'wind_direction_plus_2hr': str(Decimal(row['plus_2_wind_direction'])),
+                # 'wind_direction_plus_2hr_confidence_level': str(Decimal(row['plus_2_wind_direction_confidence_level'])),
+                'headwind_plus_2hr': str(Decimal(row['plus_2_headwind(m/s)'])),
 
-                'segment_speed_plus_2hr': Decimal(str(row['plus_2_segment_speed(km/h)'])),
-                'segment_duration_plus_2hr': Decimal(str(row['plus_2_segment_duration(s)'])),
+                'segment_speed_plus_2hr': str(Decimal(row['plus_2_segment_speed(km/h)'])),
+                'segment_duration_plus_2hr': str(Decimal(row['plus_2_segment_duration(s)'])),
                 'predicted_arrival_time_plus_2hr': str(row['plus_2_predicted_arrival_time']),
                 'predicted_finishing_time_plus_2hr': str(row['plus_2_predicted_finishing_time']),
-                'tss_plu_2_hr': Decimal(str(row['plus_2_segment_tss'])),
-                'calories_plus_2hr': Decimal(str(row['plus_2_segment_calories']))
+                'tss_plu_2_hr': str(Decimal(row['plus_2_segment_tss'])),
+                'calories_plus_2hr': str(Decimal(row['plus_2_segment_calories']))
             }
         
             try:
@@ -230,11 +230,11 @@ def write_cost_of_rest_to_database(hours, rows):
                 'key': str(uuid.uuid4()),
                 'prediction_tstamp': str(model_tstamp),
                 'model_run': model_run_id,  
-                'window_size_hours': Decimal(str(hours)),
+                'window_size_hours': str(Decimal(hours)),
                 'segment_id': row['segment_id'],
-                'elevation': Decimal(str(row['elevation'])),
-                'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
-                'cost_of_rest_s': Decimal(str(row['cost_of_rest']))
+                'elevation': str(Decimal(row['elevation'])),
+                'cumulative_distance_to_segment': str(Decimal(row['cumulative_distance_to_segment'])),
+                'cost_of_rest_s': str(Decimal(row['cost_of_rest']))
             }
             
             try:

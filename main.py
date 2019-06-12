@@ -80,7 +80,7 @@ def run():
                     # make predictions
                     if wind_data[0] != None:
                         p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
-                        
+
             except Exception as e:     
                 logging.error('Exception caught in main.run(): {}'.format(e))
 
@@ -108,20 +108,8 @@ def predict(current_lat, current_lon):
 
 
 if __name__ == '__main__':
-    
-    course = course.Course()
-    #for testing: kansas city: = 
-    current_lat = 39.0997
-    current_lon = -94.5786
-    current_segment_index = course.find_current_course_segment(current_lat, current_lon)
-    prediction_window_size = 1000
-    wind_df = course.segment_df.iloc[current_segment_index:current_segment_index + prediction_window_size]
-    wind_data = weather_requests.query_wind_data(prediction_window_size, wind_df)
-    p = prediction.Prediction(course, prediction_window_size, current_segment_index, wind_data)
-    pdb.set_trace()
-    """
+
     run()
-    """
 
 
 

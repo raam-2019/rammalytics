@@ -148,7 +148,7 @@ def write_prediction_to_database(prediction_df):
 def write_prediction_to_database2(rows):
     
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('cost_of_rest')
+    table = dynamodb.Table('raamalytics')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
@@ -218,21 +218,23 @@ def write_cost_of_rest_to_database(hours, rows):
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
-    logging.info('data_wrangler.write_cost_of_rest_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows.keys()), model_tstamp, model_run_id))
+    logging.info('data_wrangler.write_cost_of_rest_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows), model_tstamp, model_run_id))
     
     with table.batch_writer() as batch:
     
         write_count = 0
 
-        for key in rows.keys():
+        for row in rows:
 
             entry = {
                 'key': str(uuid.uuid4()),
-                'model_run': model_run_id,  
                 'prediction_tstamp': str(model_tstamp),
+                'model_run': model_run_id,  
                 'window_size_hours': Decimal(str(hours)),
-                'segment_id': key,
-                'cost_of_rest_s': Decimal(str(rows[key]))
+                'segment_id': row['segment_id'],
+                'elevation': Decimal(str(row['elevation'])),
+                'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
+                'cost_of_rest_s': Decimal(str(row['cost_of_rest']))
             }
             
             try:

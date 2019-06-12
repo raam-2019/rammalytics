@@ -28,9 +28,8 @@ logging.basicConfig(level=log_level,
 class Prediction:
 
     def __init__(self, course, analysis_window_size, current_segment_index, wind_observations):
-        logging.debug("analysis window size = {}".format(analysis_window_size))
+        logging.info("analysis window size = {}".format(analysis_window_size))
         prediction_window = 24 # hours
-
 
         self.prediction_df = course.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
 
@@ -170,14 +169,13 @@ class Prediction:
 
         logging.info("going to evaluate {} of {} segments".format(analysis_window_size, prediction_df.size))
         # perform one evolution of course accounting for 2hr rest at each segment
-        logging.info("Beginning cost of rest calculation...")
+        logging.info("Beginning cost of rest calculation - prediction_df.size = {}".format(prediction_df.size))
         cor_start = time.time()
         costs_of_rest = {}
         total_times = []
         self.ftp = 335
         
         for i in range(0, (analysis_window_size-1)):
-
             # approximate time to finish each segment in df
             first_segment = True
 
@@ -207,8 +205,11 @@ class Prediction:
                 power = self.predict_segment_power(row['slope'])
                     
                 # wind data
-                wind_speed = wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
-                wind_direction = wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
+                try:
+                    wind_speed = wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
+                    wind_direction = wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
+                except Exception as e:
+                    logging.error("calculate_cost_of_rest(): exception trying to retrieve wind data...")
 
                 headwind = self.calculate_headwind(row['bearing'], wind_speed, wind_direction) 
                 segment_speed = self.calculate_speed(power, row['slope'], headwind, row['from_elevation'])
@@ -222,10 +223,17 @@ class Prediction:
 
             min_total_time = min(total_times)
 
-        time_of_rest = {}
+        time_of_rest = []
 
-        for row_count in range(len(total_times)):
-            time_of_rest[prediction_df.iloc[row_count]['segment_id']] = (total_times[row_count] - min_total_time).seconds
+        logging.info("total_times length = {}".format(len(total_times)))
+        for row_count in range(0, len(total_times)-1):
+            segment_data = {}
+            segment_id = prediction_df.iloc[row_count]['segment_id']
+            segment_data['cost_of_rest'] = (total_times[row_count] - min_total_time).seconds
+            segment_data['elevation'] = prediction_df.iloc[row_count]['from_elevation']
+            segment_data['cumulative_distance_to_segment'] = prediction_df.iloc[row_count]['cumulative_distance_to_segment']
+            segment_data['segment_id'] = segment_id
+            time_of_rest.append(segment_data)
 
         cor_end = time.time()
 

@@ -125,7 +125,7 @@ class Prediction:
                 result['wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
                 # result['wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
                 result['rh'] = wind_observations[result['segment_id']]['rh'][hours_from_now]
-                result['heat_index'] = wind_observations[result['segment_id']]['heat_index'][hours_from_now]
+                # result['heat_index'] = wind_observations[result['segment_id']]['heat_index'][hours_from_now]
                 result['temp'] = wind_observations[result['segment_id']]['temp'][hours_from_now]
 
                 result['headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['wind_speed(m/s)'], result['wind_direction']) 

@@ -360,7 +360,7 @@ def get_bonehead_weather(latitude, longitude, elevation):
         winddirs.append(wind_direction)
 
         temp.append(forecast['forecasts'][i]['temp'])
-        heat_index.append(forecast['forecasts'][i]['heat_index'])
+        # heat_index.append(forecast['forecasts'][i]['heat_index'])
         rh.append(forecast['forecasts'][i]['rh'])
          
     data['windspeed'] = windspeeds

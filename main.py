@@ -72,7 +72,7 @@ def run():
                     # if it's been 15 min
                     wind_df = course_object.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
 
-                    if ((last_weather_et + 900) < time.time()):
+                    if ((last_weather_et + 1800) < time.time()):
                         last_weather_et = time.time()
                         logging.info("getting fresh weather data (this could take a few minutes...)")
                         wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)

@@ -425,8 +425,9 @@ if __name__ == '__main__':
             logging.info("getting fresh weather data (this could take a few minutes...)")
             wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
 
+        pdb.set_trace()
         # make predictions
-        if wind_data[0] != None:
+        if len(wind_data.keys()) != 0:
             p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
 
     except Exception as e:     

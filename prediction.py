@@ -38,7 +38,7 @@ class Prediction:
         data_wrangler.write_prediction_to_database2(analysis_results)
 
         # calculate the cost of rest
-        prediction_windows = [4, 8, 12, 24]
+        prediction_windows = [4, 8, 12] #, 24, 48
         best_guess_speed = 27 #kph
         for hours in prediction_windows:
             analysis_window_size = course.find_segment_after_x_hours(hours, best_guess_speed)
@@ -124,6 +124,9 @@ class Prediction:
                 # result['wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
                 result['wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
                 # result['wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
+                result['rh'] = wind_observations[result['segment_id']]['rh'][hours_from_now]
+                result['heat_index'] = wind_observations[result['segment_id']]['heat_index'][hours_from_now]
+                result['temp'] = wind_observations[result['segment_id']]['temp'][hours_from_now]
 
                 result['headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['wind_speed(m/s)'], result['wind_direction']) 
                 result['segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['headwind(m/s)'], result['from_elevation'])

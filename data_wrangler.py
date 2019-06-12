@@ -179,6 +179,10 @@ def write_prediction_to_database2(rows):
                 'cumulative_distance_to_segment': Decimal(str(row['cumulative_distance_to_segment'])),
                 'course_bearing': Decimal(str(row['bearing'])),
                 'segment_calories': Decimal(str(row['segment_calories'])),
+
+                'temp': Decimal(str(row['temp'])),
+                'heat_index': Decimal(str(row['heat_index'])),
+                'rh': Decimal(str(row['rh'])),
                 
                 'wind_speed_plus_2hr': Decimal(str(row['plus_2_wind_speed(m/s)'])),
                 # 'wind_speed_plus_2hr_confidence_level': Decimal(str(row['plus_2_wind_speed_confidence_level'])),

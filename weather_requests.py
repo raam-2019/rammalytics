@@ -341,7 +341,10 @@ def get_bonehead_weather(latitude, longitude, elevation):
     data = {}
     windspeeds = []
     winddirs = []
-    
+    temp = []
+    heat_index = []
+    rh = []
+
     forecast = get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
 
     for i in range(0, 359):
@@ -356,6 +359,10 @@ def get_bonehead_weather(latitude, longitude, elevation):
         wind_direction['wind_direction_probability'] = None
         winddirs.append(wind_direction)
 
+        temp.append(forecast['forecasts'][i]['temp'])
+        heat_index.append(forecast['forecasts'][i]['heat_index'])
+        rh.append(forecast['forecasts'][i]['rh'])
+         
     data['windspeed'] = windspeeds
     data['wind_direction'] = winddirs
 

@@ -28,14 +28,14 @@ logging.basicConfig(level=log_level,
 
 class Prediction:
 
-    def __init__(self, course, analysis_window_size, current_segment_index, wind_observations):
+    def __init__(self, course, analysis_window_size, current_segment_index, wind_data):
         logging.info("analysis window size = {}".format(analysis_window_size))
-        prediction_window = 24 # hours
 
+        # subset the course data to only reflect the window size (from current segment: current segment + window)
         self.prediction_df = course.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
 
         # detailed analysis of the evolution of course
-        analysis_results = self.model_course_evolution(analysis_window_size, self.prediction_df, wind_observations, course)
+        analysis_results = self.model_course_evolution(analysis_window_size, self.prediction_df, wind_data, course)
         data_wrangler.write_prediction_to_database2(analysis_results)
 
         # calculate the cost of rest
@@ -44,14 +44,14 @@ class Prediction:
         for hours in prediction_windows:
             analysis_window_size = course.find_segment_after_x_hours(hours, best_guess_speed)
             logging.info('calculating cost_of_rest for {} hour window over {} segments'.format(hours, analysis_window_size))
-            cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_observations, course)
+            cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_data, course)
             data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest)
         
 
 
 
     
-    def model_course_evolution(self, analysis_window_size, prediction_df, wind_observations, course):
+    def model_course_evolution(self, analysis_window_size, prediction_df, wind_data, course):
         logging.info("going to evolve course for {} segments".format(analysis_window_size))
         
         try:
@@ -89,11 +89,12 @@ class Prediction:
             self.prediction_df['plus_2_segment_tss'] = None
             self.prediction_df['plus_2_segment_calories'] = None
 
-            # approximate time to finish each segment in df
+            # model time to finish each segment
             first_segment = True
             rows = []
-
+            
             for index, row in self.prediction_df.iterrows():
+                
                 result = {}
                 if first_segment:
                     result['length(m)'] = row['length(m)'] - course.distance_along_segment
@@ -123,13 +124,15 @@ class Prediction:
                 result['predicted_power(watts)'] = self.predict_segment_power(result['slope'])
                 
                 # current course evolution    
-                result['wind_speed(m/s)'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
-                # result['wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
-                result['wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
-                # result['wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
-                # result['rh'] = wind_observations[result['segment_id']]['rh'][hours_from_now]
-                # result['heat_index'] = wind_observations[result['segment_id']]['heat_index'][hours_from_now]
-                # result['temp'] = wind_observations[result['segment_id']]['temp'][hours_from_now]
+                if result['segment_id'] not in wind_data.keys():
+                    pdb.set_trace()
+                result['wind_speed(m/s)'] = wind_data[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
+                # result['wind_speed_confidence_level'] = wind_data[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
+                result['wind_direction'] = wind_data[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
+                # result['wind_direction_confidence_level'] = wind_data[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_probability'] / 100
+                # result['rh'] = wind_data[result['segment_id']]['rh'][hours_from_now]
+                # result['heat_index'] = wind_data[result['segment_id']]['heat_index'][hours_from_now]
+                # result['temp'] = wind_data[result['segment_id']]['temp'][hours_from_now]
 
                 result['headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['wind_speed(m/s)'], result['wind_direction']) 
                 result['segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['headwind(m/s)'], result['from_elevation'])
@@ -140,10 +143,10 @@ class Prediction:
                 result['segment_calories'] = ((result['predicted_power(watts)'] * result['segment_duration(s)']) / 4.18) / 0.24
 
                 # 2+ hour sim
-                result['plus_2_wind_speed(m/s)'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_range(m/s)']
-                # result['plus_2_wind_speed_confidence_level'] = wind_observations[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_probability'] / 100
-                result['plus_2_wind_direction'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_range']
-                # result['plus_2_wind_direction_confidence_level'] = wind_observations[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_probability'] / 100
+                result['plus_2_wind_speed(m/s)'] = wind_data[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_range(m/s)']
+                # result['plus_2_wind_speed_confidence_level'] = wind_data[result['segment_id']]['wind_speed_data'][hours_from_now_plus_2]['windspeed_probability'] / 100
+                result['plus_2_wind_direction'] = wind_data[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_range']
+                # result['plus_2_wind_direction_confidence_level'] = wind_data[result['segment_id']]['wind_direction_data'][hours_from_now_plus_2]['wind_direction_probability'] / 100
 
                 result['plus_2_headwind(m/s)'] = self.calculate_headwind(result['bearing'], result['plus_2_wind_speed(m/s)'], result['plus_2_wind_direction']) 
                 result['plus_2_segment_speed(km/h)'] = self.calculate_speed(result['predicted_power(watts)'], result['slope'], result['plus_2_headwind(m/s)'], result['from_elevation'])
@@ -171,7 +174,7 @@ class Prediction:
 
 
 
-    def calculate_cost_of_rest(self, analysis_window_size, prediction_df, wind_observations, course):
+    def calculate_cost_of_rest(self, analysis_window_size, prediction_df, wind_data, course):
 
         logging.info("going to evaluate {} of {} segments".format(analysis_window_size, prediction_df.size))
         # perform one evolution of course accounting for 2hr rest at each segment
@@ -182,6 +185,7 @@ class Prediction:
         self.ftp = 335
         
         for i in range(0, (analysis_window_size-1)):
+
             # approximate time to finish each segment in df
             first_segment = True
 
@@ -211,8 +215,8 @@ class Prediction:
                 power = self.predict_segment_power(row['slope'])
                     
                 # wind data
-                wind_speed = wind_observations[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
-                wind_direction = wind_observations[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
+                wind_speed = wind_data[row['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
+                wind_direction = wind_data[row['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
 
                 if wind_speed is None:
                     raise Exception("calculate_cost_of_rest(): exception trying to retrieve wind data...")
@@ -226,7 +230,7 @@ class Prediction:
                 previous_row = row
 
             total_times.append(predicted_finishing_time - section_start_time)
-
+            
             min_total_time = min(total_times)
 
         time_of_rest = []
@@ -269,6 +273,7 @@ class Prediction:
 
 
     def calculate_speed(self, power, slope, headwind, elevation):
+
         # heavily based off of JFP's impementation
         # power in watts
         # Cx = The air penetration coefficient. We will use Cx = 0.25 by default.
@@ -286,14 +291,17 @@ class Prediction:
         Cx = Cx * air_pressure # adjustment for air pressure
         headwind = (0.1 ** 0.143) * headwind
 
-        roots = np.roots([Cx, 2 * Cx * headwind, Cx * headwind ** 2 + W * G * (slope / 100.0 + f), -power])
+        roots = np.roots([Cx, 2 * Cx * headwind, Cx * headwind ** 2 + W * G * (slope + f), -power])
         roots = np.real(roots[np.imag(roots) == 0])
         roots = roots[roots > 0]
 
+        if len(roots) == 0:
+            pdb.set_trace()
+            roots
         speed = np.min(roots)
 
         if speed + headwind < 0:
-            roots = np.roots([-Cx, -2 * Cx * headwind, -Cx * headwind ** 2 + W * G * (slope/100.0 + f), -power])
+            roots = np.roots([-Cx, -2 * Cx * headwind, -Cx * headwind ** 2 + W * G * (slope+ f), -power])
             roots = np.real(roots[np.imag(roots) == 0])
             roots = roots[roots>0]
             if len(roots) > 0:
@@ -307,7 +315,6 @@ class Prediction:
 
 
     def calculate_apparent_wind_angle_and_speed(self, rider_speed, rider_direction, wind_speed, wind_direction):
-
         # from sheldonbrown.com (heart) https://www.sheldonbrown.com/brandt/wind.html
          
         relative_wind_angle = min((2 * math.pi) - abs(wind_speed - wind_direction), abs(wind_speed - wind_direction))

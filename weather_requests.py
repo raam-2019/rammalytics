@@ -27,17 +27,15 @@ logging.basicConfig(level=log_level,
                         format='%(asctime)s %(levelname)s %(message)s')
 
 
+
+
+
 def query_wind_data(prediction_window, wind_df):
     logging.debug("Beginning query of wind data...")
     weather_read_start = time.time()
 
     wind_observations = {}
 
-    """
-    pool = mp.Pool(mp.cpu_count())
-    results = [pool.apply(self.get_weather_for_row, args=(row, wind_observations, prediction_window,)) for row in self.prediction_df.iterrows()]
-    pool.close()
-    """
     i = 0
     for index, row in wind_df.iterrows():
         i += 1
@@ -57,14 +55,13 @@ def query_wind_data(prediction_window, wind_df):
 
 
 
-
 def best_estimate_wind_speed(latitude, longitude, elevation, forecast_range):
 
     try:
 
         predicted_windspeed = []
         """
-        # get data from the api
+        # get data from the probabilistic api
         forecast = get_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
 
         if forecast != None:
@@ -86,6 +83,8 @@ def best_estimate_wind_speed(latitude, longitude, elevation, forecast_range):
              
         else:
         """
+
+        # get forecast from the v1 product
         forecast = get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
         for i in range(0, (forecast_range - 1)):
             observation = {}
@@ -104,13 +103,15 @@ def best_estimate_wind_speed(latitude, longitude, elevation, forecast_range):
 
 
 
+
+
 def best_estimate_wind_direction(latitude, longitude, elevation, forecast_range):
     
     predicted_wind_direction = []
 
     try:
         """
-        # get data from the api
+        # get data from the probabilistic api
         forecast = get_wind_direction_probability_forecast_for_point(latitude, longitude, elevation)
 
         if forecast != None:
@@ -131,6 +132,7 @@ def best_estimate_wind_direction(latitude, longitude, elevation, forecast_range)
 
         else:
             """
+        # get data from the v1 product
             # speed and dir from the same call
         forecast = get_v1_wind_speed_probability_forecast_for_point(latitude, longitude, elevation)
 
@@ -150,9 +152,11 @@ def best_estimate_wind_direction(latitude, longitude, elevation, forecast_range)
         return None
 
 
+
+
+
 #####################
 # query weather API's
-
 
 def get_current_conditions_for_point(latitude, longitude, elevation):
     

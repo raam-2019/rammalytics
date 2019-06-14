@@ -32,6 +32,7 @@ logging.basicConfig(level=log_level,
 
 def query_wind_data(prediction_window, wind_df):
     logging.debug("Beginning query of wind data...")
+    
     weather_read_start = time.time()
 
     wind_observations = {}
@@ -45,8 +46,8 @@ def query_wind_data(prediction_window, wind_df):
         twc_thread.start()
         twc_thread.join()
     
-
     weather_read_end = time.time()
+    
     logging.info("Query of wind data took: {} seconds".format(weather_read_end - weather_read_start))
 
     return wind_observations
@@ -363,12 +364,18 @@ def get_bonehead_weather(latitude, longitude, elevation):
         wind_direction['wind_direction_probability'] = None
         winddirs.append(wind_direction)
 
-        temp.append(forecast['forecasts'][i]['temp'])
+        if 'temp' in forecast['forecasts'][i].keys():
+            temp.append(forecast['forecasts'][i]['temp'])
+        else:
+            temp.append(None)
         # heat_index.append(forecast['forecasts'][i]['heat_index'])
         rh.append(forecast['forecasts'][i]['rh'])
          
     data['windspeed'] = windspeeds
     data['wind_direction'] = winddirs
+    data['temp'] = temp
+    data['rh'] = rh
+    # data['heat_index'] = heat_index
 
     return data
 

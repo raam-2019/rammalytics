@@ -101,20 +101,6 @@ class Course:
 
 
 
-    def find_segment_after_x_hours(self, hours, speed):
-
-        target_time = 3600 * hours * speed
-        elapsed_time = 0
-        i = 0
-        for index, row in self.segment_df.iterrows():
-            i += 1
-            elapsed_time += row['length(m)'] * speed
-            if elapsed_time > target_time:
-                return i
-
-
-
-
     def get_point_list(self, segments):
         
         points = []

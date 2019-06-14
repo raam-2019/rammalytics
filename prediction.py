@@ -10,6 +10,7 @@ import course
 
 import numpy as np
 import pandas as pd
+import pickle
 
 import weather_requests
 import data_wrangler
@@ -28,7 +29,7 @@ logging.basicConfig(level=log_level,
 
 class Prediction:
 
-    def __init__(self, course, analysis_window_size, current_segment_index, wind_data):
+    def __init__(self, course, analysis_window_size, current_segment_index, wind_data, TEST):
         logging.info("analysis window size = {}".format(analysis_window_size))
 
         # subset the course data to only reflect the window size (from current segment: current segment + window)
@@ -36,16 +37,29 @@ class Prediction:
 
         # detailed analysis of the evolution of course
         analysis_results = self.model_course_evolution(analysis_window_size, self.prediction_df, wind_data, course)
-        data_wrangler.write_prediction_to_database2(analysis_results)
+        if TEST:
+            pickle.dump(analysis_results, open( "analysis_results.p", "wb" ) )
+        else:
+            data_wrangler.write_prediction_to_database2(analysis_results)
 
         # calculate the cost of rest
-        prediction_windows = [4, 8, 12] #, 24, 48
+        prediction_windows = [4, 8, 12, 24] #, 24, 48
         best_guess_speed = 27 #kph
+        
         for hours in prediction_windows:
-            analysis_window_size = course.find_segment_after_x_hours(hours, best_guess_speed)
-            logging.info('calculating cost_of_rest for {} hour window over {} segments'.format(hours, analysis_window_size))
-            cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_data, course)
-            data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest)
+
+            # figure out how many segments to evaluate
+            (analysis_window_size, elapsed_time, elapsed_distance) = self.find_segment_after_x_hours(hours, best_guess_speed, self.prediction_df)
+            logging.info('calculating cost_of_rest - approximating {} hour window will cover {} segments, or {} kms over {} hours'.format(hours, analysis_window_size, elapsed_distance/1000, elapsed_time/3600))
+            
+            # calculate the cost of rest
+            cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_data, course.distance_along_segment)
+            
+            # write the results to the database
+            if TEST:
+                pickle.dump(cost_of_rest, open( "cost_of_rest_{}.p".format(hours), "wb" ) )
+            else:
+                data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest)
         
 
 
@@ -125,7 +139,7 @@ class Prediction:
                 
                 # current course evolution    
                 if result['segment_id'] not in wind_data.keys():
-                    pdb.set_trace()
+                    pass
                 result['wind_speed(m/s)'] = wind_data[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_range(m/s)']
                 # result['wind_speed_confidence_level'] = wind_data[result['segment_id']]['wind_speed_data'][hours_from_now]['windspeed_probability'] / 100
                 result['wind_direction'] = wind_data[result['segment_id']]['wind_direction_data'][hours_from_now]['wind_direction_range']
@@ -174,9 +188,31 @@ class Prediction:
 
 
 
-    def calculate_cost_of_rest(self, analysis_window_size, prediction_df, wind_data, course):
+    def calculate_cost_of_rest(self, analysis_window_size, prediction_df, wind_data, distance_to_start_of_simulation):
 
-        logging.info("going to evaluate {} of {} segments".format(analysis_window_size, prediction_df.size))
+        """
+        Calculates the 'cost of rest' metric by evolving the model of a set of segments
+        with a two-hour delay (rest) at each segment - returns the difference in completion time
+        between the evaluated scenario (rest at segment) and the rest scenario providing the shortest
+        completion time
+
+
+        Parameters:
+
+            analysis_window_size (int): 
+            prediction_df (dataframe): subset of course data from most current location to x number of
+                                       segments, where x = analysis_window_size
+            wind_data (dataframe): a dataframe containing wind data for a 360 hour period for each 
+                                   start location of a segment within the prediction_df
+            course (Course object): an object with an in-memory representation of the entire course
+
+        Returns:
+            list: list of the relative increase in completion time of the scenario if rest is implemented
+                  at a specific segment (indicated by index / list position)
+
+        """
+
+        logging.info("going to evaluate {} of {} possible segments".format(analysis_window_size, prediction_df.size))
         # perform one evolution of course accounting for 2hr rest at each segment
         logging.info("Beginning cost of rest calculation - prediction_df.size = {}".format(prediction_df.size))
         cor_start = time.time()
@@ -197,7 +233,7 @@ class Prediction:
                     hours_from_now = 0
                     segment_start_time = datetime.now()
                     section_start_time = segment_start_time
-                    segment_length = row['length(m)'] - course.distance_along_segment
+                    segment_length = row['length(m)'] - distance_to_start_of_simulation
                     
                 else:
                     segment_number += 1
@@ -230,12 +266,12 @@ class Prediction:
                 previous_row = row
 
             total_times.append(predicted_finishing_time - section_start_time)
-            
-            min_total_time = min(total_times)
 
+        # calcuate the cost of rest at each segment
         time_of_rest = []
+        min_total_time = min(total_times)
 
-        logging.info("total_times length = {}".format(len(total_times)))
+        logging.info("total_times: length = {}".format(len(total_times)))
         for row_count in range(0, len(total_times)-1):
             segment_data = {}
             segment_id = prediction_df.iloc[row_count]['segment_id']
@@ -398,6 +434,26 @@ class Prediction:
                         (tss * exp(1 - exp(-1/window_size)))
         
         return training_load
+
+
+
+
+
+    def find_segment_after_x_hours(self, hours, speed, prediction_df):
+
+        target_time = 3600 * hours
+        logging.info('target_time = {}'.format(target_time))
+        elapsed_distance = 0
+        elapsed_time = 0
+        mps = (speed * 1000) / (60 * 60)
+        i = 0
+        for index, row in prediction_df.iterrows():
+            i += 1
+            elapsed_distance += row['length(m)']
+            elapsed_time += row['length(m)'] / mps
+            if elapsed_time > target_time:
+                logging.info("finished: elapsed_time = {}".format(elapsed_time))
+                return (i, elapsed_time, elapsed_distance)
 
 
 

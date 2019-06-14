@@ -39,7 +39,7 @@ def run():
     course_object = course.Course()
     
     # get next n segments in a dataframe for prediction
-    analysis_window_size = 1200
+    analysis_window_size = 1500
     
     # make sure weather runs
     last_weather_et = 0
@@ -70,17 +70,21 @@ def run():
 
                 # get weather for next n segments if it's been 30 min
                 if TEST:
+                    logging.info("IN TEST MODE - LOADING WIND DATA FROM PICKLE")
                     wind_data = pickle.load( open( "wind.p", "rb" ) )
                 else:
                     if ((last_weather_et + 1800) < time.time()):
                         wind_df = course_object.segment_df.iloc[current_segment_index:current_segment_index + (analysis_window_size + 200)]
                         last_weather_et = time.time()
                         logging.info("getting fresh weather data (this could take a few minutes...)")
-                        wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)                
+                        wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
+                        pdb.set_trace()
+                        pickle_weather(wind_data)
+
 
                 # make predictions
                 if len(wind_data.keys()) != 0:
-                    p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data)
+                    p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data, TEST)
 
         except Exception as e:     
             logging.error('Exception caught in main.run(): {}'.format(e))
@@ -177,7 +181,7 @@ def ping_track_leaders():
 
 # pickle weather data
 def pickle_weather(wind_data):
-    pickle.dump( wind_data, open( "wind.p", "wb" ) )
+    pickle.dump(wind_data, open( "wind.p", "wb" ) )
 
 
 

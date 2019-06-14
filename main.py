@@ -57,7 +57,8 @@ def run():
 
             if coords is None:
                 # from trackleaders
-                coords = ping_track_leaders()
+                dave_race_id = 52
+                coords = ping_track_leaders(dave_race_id)
 
             # parse results
             read_lat = coords[0]
@@ -132,9 +133,8 @@ def get_rider_lat_long():
 
 
 # determine which segment
-def ping_track_leaders():
+def ping_track_leaders(racer_id):
     trackleaders_url = "http://trackleaders.com/spot/raam19/fullfeed.xml"
-    dave_race_id = 52
     trackleaders_data = []
     r = requests.get(url = trackleaders_url)
     tree = ElementTree.fromstring(r.content)
@@ -164,7 +164,7 @@ def ping_track_leaders():
         racer_data['observations'] = racer_observations
         trackleaders_data.append(racer_data)
     for racer in trackleaders_data:
-        if racer['racer_id'] == dave_race_id:
+        if racer['racer_id'] == racer_id:
             # find newest entry
             timelist = []
             for observation in racer['observations']:

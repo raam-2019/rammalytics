@@ -39,7 +39,7 @@ def run():
     course_object = course.Course()
     
     # get next n segments in a dataframe for prediction
-    analysis_window_size = 1500
+    analysis_window_size = 3000
     
     # make sure weather runs
     last_weather_et = 0
@@ -78,7 +78,7 @@ def run():
                         last_weather_et = time.time()
                         logging.info("getting fresh weather data (this could take a few minutes...)")
                         wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
-                        pdb.set_trace()
+                        # pdb.set_trace()
                         pickle_weather(wind_data)
 
 

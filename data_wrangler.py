@@ -145,14 +145,14 @@ def write_prediction_to_database(prediction_df):
 
 
 
-def write_prediction_to_database2(rows):
+def write_prediction_to_database2(rows, rider_number):
     
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('raamalytics')
     model_run_id = str(uuid.uuid4())
     model_tstamp = str(datetime.now())
     
-    logging.info('data_wrangler.write_prediction_to_database(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows), model_tstamp, model_run_id))
+    logging.info('data_wrangler.write_prediction_to_database2(): writing out {} records w/ timestamp: {} and id: {}'.format(len(rows), model_tstamp, model_run_id))
     
     with table.batch_writer() as batch:
     
@@ -162,6 +162,7 @@ def write_prediction_to_database2(rows):
             
             entry = {
                 'key': str(uuid.uuid4()),
+                "rider_number": str(rider_number),
                 'model_run': model_run_id,
                 'model_run_tstamp': model_tstamp,
                 'segment_id': row['segment_id'],
@@ -215,7 +216,7 @@ def write_prediction_to_database2(rows):
 
 
 
-def write_cost_of_rest_to_database(hours, rows):
+def write_cost_of_rest_to_database(hours, rows, rider_number):
     
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('cost_of_rest')
@@ -232,6 +233,7 @@ def write_cost_of_rest_to_database(hours, rows):
 
             entry = {
                 "key": str(uuid.uuid4()),
+                "rider_number": str(rider_number),
                 "prediction_tstamp": str(model_tstamp),
                 "model_run": model_run_id,  
                 "window_size_hours": str(Decimal(str(hours))),

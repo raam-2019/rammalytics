@@ -29,50 +29,27 @@ logging.basicConfig(level=log_level,
 
 class Prediction:
 
-    def __init__(self, course, analysis_window_size, current_segment_index, wind_data, TEST):
+    def __init__(self, rider_number, course, analysis_window_size, current_segment_index):
         logging.info("analysis window size = {}".format(analysis_window_size))
+
+        self.rider_number = rider_number
 
         # subset the course data to only reflect the window size (from current segment: current segment + window)
         self.prediction_df = course.segment_df.iloc[current_segment_index:current_segment_index + analysis_window_size]
 
-        # detailed analysis of the evolution of course
-        analysis_results = self.model_course_evolution(analysis_window_size, self.prediction_df, wind_data, course)
-        if TEST:
-            pickle.dump(analysis_results, open( "analysis_results.p", "wb" ) )
-        else:
-            data_wrangler.write_prediction_to_database2(analysis_results)
-
-        # calculate the cost of rest
-        prediction_windows = [4, 8, 12, 24] #, 24, 48
-        best_guess_speed = 27 #kph
         
-        for hours in prediction_windows:
-
-            # figure out how many segments to evaluate
-            (analysis_window_size, elapsed_time, elapsed_distance) = self.find_segment_after_x_hours(hours, best_guess_speed, self.prediction_df)
-            logging.info('calculating cost_of_rest - approximating {} hour window will cover {} segments, or {} kms over {} hours'.format(hours, analysis_window_size, elapsed_distance/1000, elapsed_time/3600))
             
-            # calculate the cost of rest
-            cost_of_rest = self.calculate_cost_of_rest(analysis_window_size, self.prediction_df, wind_data, course.distance_along_segment)
-            
-            # write the results to the database
-            if TEST:
-                pickle.dump(cost_of_rest, open( "cost_of_rest_{}.p".format(hours), "wb" ) )
-            else:
-                data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest)
-        
-
 
 
     
-    def model_course_evolution(self, analysis_window_size, prediction_df, wind_data, course):
+    def model_course_evolution(self, analysis_window_size, wind_data, course, TEST):
         logging.info("going to evolve course for {} segments".format(analysis_window_size))
         
         try:
             # perform predictions
             logging.info("modeling segment")
             prediction_start = time.time()
-
+            pdb.set_trace()
             self.ftp = 335
             
             # extend dataframe for predictive variables
@@ -107,6 +84,7 @@ class Prediction:
             first_segment = True
             rows = []
             
+            logging.info('iterating through self.prediction_df to create predictions...')
             for index, row in self.prediction_df.iterrows():
                 
                 result = {}
@@ -180,15 +158,19 @@ class Prediction:
             logging.info("course evolution analysis took: {} seconds".format(prediction_end - prediction_start))
 
         except Exception as e:
+            pdb.set_trace()
             logging.error(e)
 
-        return rows
+        if TEST:
+            pickle.dump(rows, open( "analysis_results_rider_{}.p".format(self.rider_number), "wb" ) )
+        else:
+            data_wrangler.write_prediction_to_database2(rows, self.rider_number)
 
 
 
 
 
-    def calculate_cost_of_rest(self, analysis_window_size, prediction_df, wind_data, distance_to_start_of_simulation):
+    def calculate_cost_of_rest(self, wind_data, distance_to_start_of_simulation, hours, TEST):
 
         """
         Calculates the 'cost of rest' metric by evolving the model of a set of segments
@@ -212,9 +194,16 @@ class Prediction:
 
         """
 
-        logging.info("going to evaluate {} of {} possible segments".format(analysis_window_size, prediction_df.size))
+        best_guess_speed = 27 #kph
+
+        # figure out how many segments to evaluate
+        (analysis_window_size, elapsed_time, elapsed_distance) = self.find_segment_after_x_hours(hours, best_guess_speed, self.prediction_df)
+        logging.info('calculating cost_of_rest - approximating {} hour window will cover {} segments, or {} kms over {} hours'.format(hours, analysis_window_size, elapsed_distance/1000, elapsed_time/3600))
+            
+
+        logging.info("going to evaluate {} of {} possible segments".format(analysis_window_size, self.prediction_df.size))
         # perform one evolution of course accounting for 2hr rest at each segment
-        logging.info("Beginning cost of rest calculation - prediction_df.size = {}".format(prediction_df.size))
+        logging.info("Beginning cost of rest calculation - prediction_df.size = {}".format(self.prediction_df.size))
         cor_start = time.time()
         costs_of_rest = {}
         total_times = []
@@ -274,10 +263,10 @@ class Prediction:
         logging.info("total_times: length = {}".format(len(total_times)))
         for row_count in range(0, len(total_times)-1):
             segment_data = {}
-            segment_id = prediction_df.iloc[row_count]['segment_id']
+            segment_id = self.prediction_df.iloc[row_count]['segment_id']
             segment_data['cost_of_rest'] = (total_times[row_count] - min_total_time).seconds
-            segment_data['elevation'] = prediction_df.iloc[row_count]['from_elevation']
-            segment_data['cumulative_distance_to_segment'] = prediction_df.iloc[row_count]['cumulative_distance_to_segment']
+            segment_data['elevation'] = self.prediction_df.iloc[row_count]['from_elevation']
+            segment_data['cumulative_distance_to_segment'] = self.prediction_df.iloc[row_count]['cumulative_distance_to_segment']
             segment_data['segment_id'] = segment_id
             time_of_rest.append(segment_data)
 
@@ -285,7 +274,11 @@ class Prediction:
 
         logging.info("Cost of rest evaluation took: {} seconds".format(cor_end - cor_start))
 
-        return time_of_rest
+        # write the results to the database
+        if TEST:
+            pickle.dump(cost_of_rest, open( "cost_of_rest_{}_rider_{}.p".format(hours, self.rider_number), "wb" ) )
+        else:
+            data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest, self.rider_number)
 
 
 

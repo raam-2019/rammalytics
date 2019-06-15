@@ -33,13 +33,14 @@ logging.basicConfig(level=log_level,
 
 def run():
 
-    TEST = False
-
+    TEST = True
+    RELOAD_WEATHER = False
+    
     # load the course data
     course_object = course.Course()
     
     # get next n segments in a dataframe for prediction
-    analysis_window_size = 3000
+    analysis_window_size = 1500
     
     # make sure weather runs
     last_weather_et = 0
@@ -58,7 +59,8 @@ def run():
             if coords is None:
                 # from trackleaders
                 dave_race_id = 52
-                coords = ping_track_leaders(dave_race_id)
+                racer_id = dave_race_id
+                coords = ping_track_leaders(racer_id)
 
             # parse results
             read_lat = coords[0]
@@ -70,7 +72,7 @@ def run():
                 current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)
 
                 # get weather for next n segments if it's been 30 min
-                if TEST:
+                if not RELOAD_WEATHER:
                     logging.info("IN TEST MODE - LOADING WIND DATA FROM PICKLE")
                     wind_data = pickle.load( open( "wind.p", "rb" ) )
                 else:
@@ -85,13 +87,99 @@ def run():
 
                 # make predictions
                 if len(wind_data.keys()) != 0:
-                    p = prediction.Prediction(course_object, analysis_window_size, current_segment_index, wind_data, TEST)
+                    p = prediction.Prediction(racer_id, course_object, analysis_window_size, current_segment_index)
+
+                    # model evolution of course
+                    p.model_course_evolution(analysis_window_size, wind_data, course_object, TEST)
+
+                    # calculate the cost of rest
+                    prediction_windows = [4, 8, 12, 24] #, 24, 48
+                    for hours in prediction_windows:
+                        p.calculate_cost_of_rest(wind_data, course_object.distance_along_segment, hours, TEST)
 
         except Exception as e:     
             logging.error('Exception caught in main.run(): {}'.format(e))
+            pdb.set_trace()
 
         else:
             logging.error("dataframe populated by IoT datastore is empty!!!")
+
+
+
+
+def run_mano_a_mano():
+
+    TEST = True
+    RELOAD_WEATHER = True
+
+    # load the course data
+    course_object = course.Course()
+    
+    # get next n segments in a dataframe for prediction
+    analysis_window_size = 3000
+    
+    # make sure weather runs
+    last_weather_et = 0
+
+    # do stuff    
+    while True:
+        racer_ids = []
+
+        dave_race_id = 52
+        strasser_race_id = 43
+
+        racer_ids.append(dave_race_id)
+        racer_ids.append(strasser_race_id)
+
+        # heartbeat
+        data_wrangler.heartbeat()
+
+        for racer_id in racer_ids:
+            # parse results
+            coords = ping_track_leaders(racer_id)
+
+            read_lat = coords[0]
+            read_lon = coords[1]
+
+            if read_lat is not None: 
+
+                # determine course segment
+                current_segment_index = course_object.find_current_course_segment(read_lat, read_lon)
+
+                # get weather for next n segments if it's been 30 min
+                if not RELOAD_WEATHER:
+                    logging.info("IN TEST MODE - LOADING WIND DATA FROM PICKLE")
+                    wind_data = pickle.load( open( "wind.p", "rb" ) )
+                else:
+                    if ((last_weather_et + 1800) < time.time()):
+                        wind_df = course_object.segment_df.iloc[current_segment_index:current_segment_index + (analysis_window_size + 200)]
+                        last_weather_et = time.time()
+                        logging.info("getting fresh weather data (this could take a few minutes...)")
+                        wind_data = weather_requests.query_wind_data(analysis_window_size, wind_df)
+                        # pdb.set_trace()
+                        pickle_weather(wind_data)
+
+                # make predictions
+                if len(wind_data.keys()) != 0:
+                    p = prediction.Prediction(racer_id, course_object, analysis_window_size, current_segment_index)
+
+                    # model evolution of course
+                    p.model_course_evolution(analysis_window_size, wind_data, course_object, TEST)
+
+                    # calculate the cost of rest
+                    prediction_windows = [4, 8, 12, 24] #, 24, 48
+                    try:
+                        for hours in prediction_windows:
+                            pass
+                            # p.calculate_cost_of_rest(wind_data, course_object.distance_along_segment, hours, TEST)
+                    except Exception as e:
+                        logging.error("Issue with cost of rest analysis for {} hours, racer {}".format(hours, racer_id))
+
+
+            else:
+                logging.error("dataframe populated by IoT datastore is empty!!!")
+
+
 
 
 
@@ -202,8 +290,8 @@ def predict(current_lat, current_lon):
 
 
 if __name__ == '__main__':
-
-    run()
+    # run()
+    run_mano_a_mano()
 
 
 

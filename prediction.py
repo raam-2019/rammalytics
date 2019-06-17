@@ -49,7 +49,7 @@ class Prediction:
             # perform predictions
             logging.info("modeling segment")
             prediction_start = time.time()
-            pdb.set_trace()
+    
             self.ftp = 335
             
             # extend dataframe for predictive variables
@@ -158,13 +158,10 @@ class Prediction:
             logging.info("course evolution analysis took: {} seconds".format(prediction_end - prediction_start))
 
         except Exception as e:
-            pdb.set_trace()
             logging.error(e)
 
-        if TEST:
-            pickle.dump(rows, open( "analysis_results_rider_{}.p".format(self.rider_number), "wb" ) )
-        else:
-            data_wrangler.write_prediction_to_database2(rows, self.rider_number)
+        pickle.dump(rows, open( "analysis_results_rider_{}.p".format(self.rider_number), "wb" ) )
+        data_wrangler.write_prediction_to_database2(rows, self.rider_number)
 
 
 
@@ -275,10 +272,9 @@ class Prediction:
         logging.info("Cost of rest evaluation took: {} seconds".format(cor_end - cor_start))
 
         # write the results to the database
-        if TEST:
-            pickle.dump(cost_of_rest, open( "cost_of_rest_{}_rider_{}.p".format(hours, self.rider_number), "wb" ) )
-        else:
-            data_wrangler.write_cost_of_rest_to_database(hours, cost_of_rest, self.rider_number)
+
+        pickle.dump(time_of_rest, open("cost_of_rest_{}_rider_{}.p".format(hours, self.rider_number), "wb" ) )
+        data_wrangler.write_cost_of_rest_to_database(hours, time_of_rest, self.rider_number)
 
 
 
@@ -324,9 +320,6 @@ class Prediction:
         roots = np.real(roots[np.imag(roots) == 0])
         roots = roots[roots > 0]
 
-        if len(roots) == 0:
-            pdb.set_trace()
-            roots
         speed = np.min(roots)
 
         if speed + headwind < 0:

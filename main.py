@@ -34,13 +34,13 @@ logging.basicConfig(level=log_level,
 def run():
 
     TEST = True
-    RELOAD_WEATHER = False
+    RELOAD_WEATHER = True
     
     # load the course data
     course_object = course.Course()
     
     # get next n segments in a dataframe for prediction
-    analysis_window_size = 1500
+    analysis_window_size = 4000
     
     # make sure weather runs
     last_weather_et = 0
@@ -54,13 +54,14 @@ def run():
         try:
             # get current location
             # from s3
-            coords = get_rider_lat_long()
+            # coords = get_rider_lat_long()
 
-            if coords is None:
+            # if coords is None:
                 # from trackleaders
-                dave_race_id = 52
-                racer_id = dave_race_id
-                coords = ping_track_leaders(racer_id)
+            strasser_race_id = 43
+            dave_race_id = 52
+            racer_id = dave_race_id
+            coords = ping_track_leaders(racer_id)
 
             # parse results
             read_lat = coords[0]
@@ -93,9 +94,10 @@ def run():
                     p.model_course_evolution(analysis_window_size, wind_data, course_object, TEST)
 
                     # calculate the cost of rest
-                    prediction_windows = [4, 8, 12, 24] #, 24, 48
-                    for hours in prediction_windows:
-                        p.calculate_cost_of_rest(wind_data, course_object.distance_along_segment, hours, TEST)
+                    if racer_id == dave_race_id:
+                        prediction_windows = [4, 8, 12, 24] #, 24, 48
+                        for hours in prediction_windows:
+                            p.calculate_cost_of_rest(wind_data, course_object.distance_along_segment, hours, TEST)
 
         except Exception as e:     
             logging.error('Exception caught in main.run(): {}'.format(e))
@@ -110,7 +112,7 @@ def run():
 def run_mano_a_mano():
 
     TEST = True
-    RELOAD_WEATHER = True
+    RELOAD_WEATHER = False
 
     # load the course data
     course_object = course.Course()
@@ -127,7 +129,8 @@ def run_mano_a_mano():
 
         dave_race_id = 52
         strasser_race_id = 43
-
+        baloh_race_id = 42
+        olsen_race_id = 44
         racer_ids.append(dave_race_id)
         racer_ids.append(strasser_race_id)
 
@@ -167,13 +170,14 @@ def run_mano_a_mano():
                     p.model_course_evolution(analysis_window_size, wind_data, course_object, TEST)
 
                     # calculate the cost of rest
-                    prediction_windows = [4, 8, 12, 24] #, 24, 48
-                    try:
-                        for hours in prediction_windows:
-                            pass
-                            # p.calculate_cost_of_rest(wind_data, course_object.distance_along_segment, hours, TEST)
-                    except Exception as e:
-                        logging.error("Issue with cost of rest analysis for {} hours, racer {}".format(hours, racer_id))
+                    if racer_id == dave_race_id:
+                        prediction_windows = [4, 8, 12, 24] #, 24, 48
+                        try:
+                            for hours in prediction_windows:
+                                # pass
+                                p.calculate_cost_of_rest(wind_data, course_object.distance_along_segment, hours, TEST)
+                        except Exception as e:
+                            logging.error("Issue with cost of rest analysis for {} hours, racer {}".format(hours, racer_id))
 
 
             else:

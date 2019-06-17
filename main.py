@@ -111,8 +111,8 @@ def run():
 
 def run_mano_a_mano():
 
-    TEST = True
-    RELOAD_WEATHER = False
+    TEST = False
+    RELOAD_WEATHER = True
 
     # load the course data
     course_object = course.Course()

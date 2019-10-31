@@ -21,7 +21,7 @@ Flask-Cors==3.0.7
 gekko==0.2.0
 gpx-parser==0.0.4
 gunicorn==19.9.0
-httpie==1.0.2
+httpie==1.0.3
 icecream==1.5.0
 idna==2.8
 ipykernel==5.1.0

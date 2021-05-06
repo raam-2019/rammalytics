@@ -17,7 +17,7 @@ entrypoints==0.3
 falcon==2.0.0
 fitparse==1.1.0
 Flask==1.0.2
-Flask-Cors==3.0.7
+Flask-Cors==3.0.9
 gekko==0.2.0
 gpx-parser==0.0.4
 gunicorn==19.9.0
